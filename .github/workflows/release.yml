@@ -1,0 +1,204 @@
+# Builds Decklet for Windows, macOS (Apple Silicon) and Linux, then makes a GitHub release.
+# Run it by hand from the Actions tab. main makes a normal release; any other branch makes a pre-release test build.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      release_type:
+        description: Draft (only you can see it) or public (on main a normal release, on other branches a pre-release)
+        type: choice
+        options: [draft, public]
+        default: draft
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  APP_NAME: Decklet
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check .
+      - name: Test
+        run: pytest -q
+
+  version:
+    needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write # needed to see draft releases
+    outputs:
+      tag: ${{ steps.next.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Work out next version
+        id: next
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP: ${{ inputs.bump }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          branch_arg=()
+          if [ "$BRANCH" != main ]; then branch_arg=("$BRANCH"); fi
+          tag=$(
+            {
+              git tag --list
+              gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq '.[].tag_name'
+            } | bash .github/scripts/next_version.sh "$BUMP" "${branch_arg[@]}"
+          )
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Building $tag ($BUMP)" >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    needs: version
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows-x64
+            icon: assets/icon.ico
+            mode: --onefile
+          - os: macos-latest
+            target: macos-arm64
+            icon: assets/icon.icns
+            mode: --onedir
+          - os: ubuntu-24.04
+            target: linux-x64
+            icon: assets/icon.png
+            mode: --onefile
+    runs-on: ${{ matrix.os }}
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
+      TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Check the Mac is Apple Silicon
+        if: runner.os == 'macOS'
+        run: test "$(uname -m)" = arm64
+
+      - name: Install Linux system packages (Qt web view)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 \
+            libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-xinerama0 libnss3 libxcomposite1 \
+            libxdamage1 libxrandr2 libxtst6 libfontconfig1 libdbus-1-3
+
+      - name: Install
+        shell: bash
+        run: pip install -e ".[build]"
+
+      - name: Write the version
+        shell: bash
+        run: echo "__version__ = \"${TAG#v}\"" > decklet/_version.py
+
+      - name: Check the GUI libraries import
+        shell: bash
+        run: |
+          python -c "import webview, flask, PIL, pillow_heif; print('ok')"
+          if [ "$RUNNER_OS" = Linux ]; then python -c "from PyQt6 import QtWebEngineWidgets; print('qt ok')"; fi
+
+      - name: Build
+        shell: bash
+        run: |
+          pyinstaller --noconfirm --clean --windowed ${{ matrix.mode }} \
+            --name "$APP_NAME" --icon "${{ matrix.icon }}" \
+            --osx-bundle-identifier io.github.tariqmk.decklet \
+            --add-data "decklet/web:decklet/web" --add-data "decklet/icon.png:decklet" \
+            --collect-all webview --collect-all pillow_heif \
+            decklet/__main__.py
+
+      - name: Check the build
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            macOS)
+              ls dist/$APP_NAME.app/Contents/Resources/*.icns
+              test -f "dist/$APP_NAME.app/Contents/Resources/decklet/web/index.html"
+              test -f "dist/$APP_NAME.app/Contents/Resources/decklet/web/fonts/inter-latin-400-normal.woff2"
+              ;;
+            Windows) exe="dist/$APP_NAME.exe" ;;
+            Linux) exe="dist/$APP_NAME" ;;
+          esac
+          if [ "$RUNNER_OS" != macOS ]; then
+            pyi-archive_viewer --list --recursive "$exe" > contents.txt
+            grep -E "decklet.web.index\.html" contents.txt
+            grep -E "decklet.web.fonts.inter-latin-400-normal\.woff2" contents.txt
+            grep -E "decklet.icon\.png" contents.txt
+            ls dist
+            test "$(ls dist | wc -l)" -eq 1 # nothing beside the executable
+          fi
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir out
+          name="$APP_NAME-$TAG-$TARGET"
+          case "$RUNNER_OS" in
+            Windows) cp "dist/$APP_NAME.exe" "out/$name.exe" ;;
+            macOS) ditto -c -k --keepParent "dist/$APP_NAME.app" "out/$name.zip" ;;
+            Linux) tar -czf "out/$name.tar.gz" -C dist "$APP_NAME" ;;
+          esac
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: out/*
+          if-no-files-found: error
+
+  release:
+    needs: [version, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: files
+          merge-multiple: true
+      - name: Create tag and release
+        shell: bash
+        env:
+          RELEASE_TYPE: ${{ inputs.release_type }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          ls -la files
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA"
+          flags=()
+          if [ "$RELEASE_TYPE" = draft ]; then flags+=(--draft); fi
+          if [ "$BRANCH" != main ]; then flags+=(--prerelease --latest=false); fi
+          gh release create "$TAG" files/* --verify-tag --title "$APP_NAME $TAG" --generate-notes "${flags[@]}"
+          echo "Released $TAG ($RELEASE_TYPE)" >> "$GITHUB_STEP_SUMMARY"

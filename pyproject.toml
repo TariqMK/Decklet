@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "decklet"
+description = "A desktop viewer for photos of business cards, with a 3D card view."
+readme = "README.md"
+license = "GPL-3.0-only"
+requires-python = ">=3.11"
+dynamic = ["version"]
+dependencies = [
+    "flask>=3.1",
+    "pillow>=11",
+    "pillow-heif>=0.21",
+    "pywebview>=6",
+    # Linux uses the Qt web view, because it can be bundled into one file.
+    "PyQt6>=6.7; sys_platform == 'linux'",
+    "PyQt6-WebEngine>=6.7; sys_platform == 'linux'",
+    "qtpy>=2.4; sys_platform == 'linux'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.8"]
+build = ["pyinstaller>=6.11"]
+
+[project.gui-scripts]
+decklet = "decklet.__main__:main"
+
+[tool.setuptools]
+packages = ["decklet"]
+
+[tool.setuptools.dynamic]
+version = { attr = "decklet._version.__version__" }
+
+[tool.setuptools.package-data]
+decklet = ["web/*", "web/fonts/*", "icon.png"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"

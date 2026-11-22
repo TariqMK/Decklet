@@ -1,0 +1,37 @@
+name: Bug report
+description: Something isn't working right
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can we make it happen again?
+      placeholder: |
+        1. Chose a cards folder with 40 person folders
+        2. Opened a card and selected Edit
+        3. Selected Save card and got an error
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Decklet version
+      description: Shown next to the Decklet title at the top of the window
+      placeholder: e.g. 1.4.0
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: e.g. Windows 11, macOS 26.1, Ubuntu 24.04
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots or a screen recording help a lot. The log file helps too (Settings > View Logs). You can drag them in here.

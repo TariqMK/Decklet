@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<!--
+  DECKLET — window page. Shows the business cards in the chosen folder and opens one in a 3D view.
+  Data comes from the local Decklet server (folder + card.json); nothing is kept in the browser.
+  Keys: Drag = rotate · Scroll = zoom · Double-click / F = flip · R = reset · ←/→ = previous/next · Esc = close · / = search
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="decklet-token" content="__DECKLET_TOKEN__">
+<title>Decklet</title>
+<style>
+/* ============ fonts (bundled, works offline) ============ */
+@font-face{font-family:Inter;font-weight:400;font-display:swap;src:url(/fonts/inter-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:Inter;font-weight:500;font-display:swap;src:url(/fonts/inter-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:Inter;font-weight:600;font-display:swap;src:url(/fonts/inter-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:Inter;font-weight:400;font-display:swap;src:url(/fonts/inter-latin-ext-400-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:Inter;font-weight:500;font-display:swap;src:url(/fonts/inter-latin-ext-500-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:Inter;font-weight:600;font-display:swap;src:url(/fonts/inter-latin-ext-600-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Cormorant Garamond';font-weight:500;font-display:swap;src:url(/fonts/cormorant-garamond-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cormorant Garamond';font-weight:600;font-display:swap;src:url(/fonts/cormorant-garamond-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Cormorant Garamond';font-weight:500;font-display:swap;src:url(/fonts/cormorant-garamond-latin-ext-500-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Cormorant Garamond';font-weight:600;font-display:swap;src:url(/fonts/cormorant-garamond-latin-ext-600-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+
+/* ============ CONFIG (colours) ============ */
+/* Warm neutral ramp (card stock at night), one gold accent from the brand. */
+:root{
+  --deep:#12110f; --bg:#161513; --panel:#1c1a18; --raised:#262421;
+  --line:rgba(239,233,222,.08); --line2:rgba(239,233,222,.14);
+  --text:#efe9de; --text2:#aaa398; --muted:#8a847a;
+  --gold:#C9A96E; --gold2:#d8bc87; --danger:#e5484d; --danger-ink:#ef7d76;
+  --edge:#dcd5c6;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/20px Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--text);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px;transition:text-decoration-color .16s var(--ease)}
+a:hover{text-decoration-color:var(--text2)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.kbd{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 4px;border:1px solid var(--line2);border-bottom-width:2px;border-radius:4px;font:500 11px/1 var(--mono);color:var(--text2)}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;height:64px;padding:0 32px;background:rgba(22,21,19,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.brand{order:-2;font-family:'Cormorant Garamond',serif;font-size:28px;line-height:1;font-weight:600;color:var(--gold)}
+.ver{order:-1;margin-right:auto;margin-left:4px;padding:4px 8px;border:0;border-radius:6px;background:transparent;font:400 12px/16px var(--mono);color:var(--muted);cursor:pointer;transition:background-color .16s var(--ease),color .16s var(--ease)}
+.ver:hover{background:var(--raised);color:var(--text2)}
+.ver:disabled{cursor:default}
+.ver.newer{color:var(--gold)}
+.searchbox{position:relative;display:flex;align-items:center;width:280px}
+.searchbox .i{position:absolute;left:12px;color:var(--muted);pointer-events:none}
+.searchbox .kbd{position:absolute;right:8px;pointer-events:none}
+.search{width:100%;height:36px;padding:0 36px;border:1px solid var(--line);border-radius:8px;outline:none;background:var(--panel);transition:border-color .16s var(--ease)}
+.search::placeholder{color:var(--muted)}
+.search:focus,select:focus,.field-in:focus{border-color:rgba(201,169,110,.6)}
+select{height:36px;padding:0 32px 0 12px;background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238a847a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E") no-repeat right 10px center;
+  border:1px solid var(--line);border-radius:8px;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;cursor:pointer;font-weight:500;color:var(--text);
+  transition:background-color .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease),transform .12s var(--ease)}
+.btn:hover{background:var(--raised);border-color:var(--line2)}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.5;cursor:default;transform:none}
+.btn .i{color:var(--text2)}
+.btn.icon{width:36px;padding:0}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:#161513;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.btn.primary .i{color:#161513}
+.btn.primary:hover{background:var(--gold2);border-color:var(--gold2)}
+.btn.danger{color:var(--danger-ink)}
+.btn.danger.armed{background:var(--danger);border-color:var(--danger);color:#fff}
+.divider{width:1px;height:20px;background:var(--line);margin:0 4px}
+
+/* ---------- gallery ---------- */
+main{padding:24px 32px 64px;max-width:1600px;margin:0 auto}
+.count{color:var(--muted);font-size:13px;margin-bottom:20px;font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:32px 24px}
+.tile{cursor:pointer;perspective:900px;border-radius:8px;outline-offset:4px}
+.thumb{position:relative;aspect-ratio:1.75;border-radius:8px;overflow:hidden;background:var(--panel);
+  box-shadow:0 12px 28px rgba(0,0,0,.45),0 0 0 1px var(--line);transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.tile:hover .thumb{box-shadow:0 20px 40px rgba(0,0,0,.55),0 0 0 1px var(--line2)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.thumb .shine{position:absolute;inset:0;background:radial-gradient(circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.22),transparent 55%);opacity:0;transition:opacity .2s var(--ease);pointer-events:none}
+.tile:hover .shine{opacity:1}
+.noimg{display:grid;place-items:center;height:100%;color:var(--muted);font-size:13px}
+.meta{padding:12px 0 0}
+.meta .n{font-weight:500;color:var(--text)}
+.meta .c{color:var(--text2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{grid-column:1/-1;text-align:center;padding:96px 24px;color:var(--text2)}
+.empty b{display:block;font-family:'Cormorant Garamond',serif;font-size:32px;line-height:40px;font-weight:500;color:var(--text);margin-bottom:8px}
+.empty .btn{margin-top:24px}
+
+/* ---------- 3D viewer ---------- */
+.viewer{position:fixed;inset:0;z-index:20;display:grid;grid-template-columns:1fr 380px;
+  background:radial-gradient(ellipse at 38% 45%,#2a2622 0%,#151412 62%,#0f0e0d 100%);opacity:0;pointer-events:none;transition:opacity .25s var(--ease)}
+.viewer.open{opacity:1;pointer-events:auto}
+.stage{position:relative;perspective:1600px;display:grid;place-items:center;cursor:grab;touch-action:none;overflow:hidden;user-select:none;-webkit-user-select:none}
+.stage.dragging{cursor:grabbing}
+.card3d{position:relative;width:var(--w,500px);height:var(--h,286px);transform-style:preserve-3d;will-change:transform}
+.face{position:absolute;left:0;top:0;width:var(--w);height:var(--h);border-radius:var(--r);overflow:hidden;
+  background:#ddd center/cover no-repeat;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.face.front{transform:translateZ(calc(var(--t) / 2))}
+.face.back{transform:rotateY(180deg) translateZ(calc(var(--t) / 2))}
+.face.missing{background:repeating-linear-gradient(45deg,#2a2825 0 12px,#252321 12px 24px)!important;display:grid;place-items:center;color:var(--muted)}
+.glare{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.16),rgba(255,255,255,0) 60%),
+             linear-gradient(115deg,rgba(255,255,255,0) 40%,rgba(255,255,255,.06) 50%,rgba(255,255,255,0) 60%)}
+.edge{position:absolute;background:var(--edge)}
+.edge.l,.edge.r{width:var(--t);height:calc(var(--h) - 2 * var(--r));left:calc((var(--w) - var(--t)) / 2);top:var(--r)}
+.edge.r{transform:rotateY(90deg) translateZ(calc(var(--w) / 2))}
+.edge.l{transform:rotateY(-90deg) translateZ(calc(var(--w) / 2))}
+.edge.t,.edge.b{height:var(--t);width:calc(var(--w) - 2 * var(--r));top:calc((var(--h) - var(--t)) / 2);left:var(--r)}
+.edge.t{transform:rotateX(90deg) translateZ(calc(var(--h) / 2))}
+.edge.b{transform:rotateX(-90deg) translateZ(calc(var(--h) / 2))}
+.floor{position:absolute;left:50%;top:calc(50% + var(--h,286px) / 2 + 48px);width:calc(var(--w,500px) * .9);height:48px;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.6),transparent 70%);filter:blur(8px);transform:translateX(-50%);pointer-events:none}
+.hud-top{position:absolute;top:16px;left:16px;right:24px;display:flex;gap:8px;align-items:center;z-index:2}
+.hud-top .side{margin-left:auto;color:var(--muted);font-size:13px}
+.hud-top .side b{font-weight:500;color:var(--text2)}
+.hud{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:4px;padding:4px;background:rgba(28,26,24,.85);
+  border:1px solid var(--line);border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:2;white-space:nowrap}
+.hud .btn{height:32px;padding:0 12px;border-color:transparent;background:transparent;font-weight:400;color:var(--text2)}
+.hud .btn:hover{background:var(--raised);color:var(--text)}
+.hud .btn.on{color:var(--text);background:var(--raised);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.hud .sep{width:1px;margin:8px 4px;background:var(--line)}
+.hint{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);display:flex;gap:16px;align-items:center;color:var(--muted);font-size:12px;pointer-events:none;transition:opacity .6s var(--ease);white-space:nowrap}
+.hint span{display:inline-flex;gap:6px;align-items:center}
+.stage .btn.icon{background:rgba(28,26,24,.7)}
+
+/* ---------- info panel ---------- */
+.panel{background:var(--panel);border-left:1px solid var(--line);padding:32px 28px;overflow:auto}
+.pname{font-family:'Cormorant Garamond',serif;font-size:36px;line-height:40px;font-weight:600;color:var(--text)}
+.prole{color:var(--text2);margin-top:8px}
+.fields{margin-top:24px;border-top:1px solid var(--line)}
+.field{display:flex;gap:12px;justify-content:space-between;align-items:center;min-height:56px;padding:8px 0;border-bottom:1px solid var(--line)}
+.fl{font-size:12px;line-height:16px;color:var(--muted)}
+.fv{color:var(--text);word-break:break-word;margin-top:2px}
+.copy{display:grid;place-items:center;width:28px;height:28px;flex:none;border-radius:6px;border:0;background:transparent;color:var(--muted);cursor:pointer;transition:background-color .16s var(--ease),color .16s var(--ease)}
+.copy:hover{background:var(--raised);color:var(--text)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:20px}
+.tag{height:24px;display:inline-flex;align-items:center;padding:0 8px;border-radius:6px;background:var(--raised);color:var(--text2);font-size:12px}
+.notes{margin-top:20px;padding:12px 16px;background:var(--raised);border-radius:8px;color:var(--text2);white-space:pre-wrap}
+.warn{margin-top:20px;padding:12px 16px;border:1px solid rgba(229,72,77,.4);border-radius:8px;color:var(--danger-ink);font-size:13px}
+.files{margin-top:24px;font:12px/20px var(--mono);color:var(--muted);word-break:break-all}
+.files b{font-weight:400;color:var(--text2)}
+.files .none{opacity:.6}
+.pactions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+
+/* ---------- dialogs ---------- */
+.modal{position:fixed;inset:0;z-index:40;background:rgba(10,9,8,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;place-items:center;padding:24px}
+.modal.open{display:grid}
+.dialog{width:min(920px,100%);max-height:calc(100vh - 48px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.dialog.small{width:min(520px,100%)}
+.dialog h2{margin:0;font-family:'Cormorant Garamond',serif;font-size:28px;line-height:32px;font-weight:600;color:var(--text)}
+.dialog .sub{color:var(--text2);margin:8px 0 20px}
+.dialog .headline{color:var(--text);font-weight:500;margin:12px 0 4px}
+.dialog details{margin-top:16px;background:var(--raised);border-radius:8px;padding:8px 12px;color:var(--text2)}
+.dialog details summary{cursor:pointer}
+.dialog details pre{white-space:pre-wrap;font:12px/18px var(--mono);margin:8px 0 0;max-height:240px;overflow:auto}
+.editor{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
+.drops{display:grid;gap:12px}
+.drop{position:relative;aspect-ratio:1.75;border:1px dashed var(--line2);border-radius:8px;display:grid;place-items:center;cursor:pointer;
+  background:var(--deep) center/cover no-repeat;color:var(--muted);text-align:center;font-size:13px;padding:0 16px;transition:border-color .16s var(--ease),background-color .16s var(--ease)}
+.drop:hover,.drop.over{border-color:rgba(201,169,110,.6);background-color:var(--raised)}
+.drop.has{border-style:solid;border-color:var(--line)}
+.drop.has span{display:none}
+.drop.locked{cursor:default}
+.drop.locked:hover{border-color:var(--line)}
+.drop .lbl{position:absolute;top:8px;left:8px;font-size:12px;line-height:16px;background:rgba(18,17,15,.75);padding:2px 8px;border-radius:4px;color:var(--text)}
+.drop span{display:flex;flex-direction:column;align-items:center;gap:8px}
+.drop em{font-style:normal}
+.swap{justify-self:start}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px 12px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:16px;color:var(--text2)}
+.form .wide{grid-column:1/-1}
+.field-in{height:36px;padding:0 12px;background:var(--deep);border:1px solid var(--line);border-radius:8px;outline:none;color:var(--text);font-size:14px;transition:border-color .16s var(--ease)}
+textarea.field-in{height:auto;padding:8px 12px;resize:vertical;min-height:72px;line-height:20px}
+.field-in[type=date]{color-scheme:dark}
+.dfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
+.dfoot .left{margin-right:auto}
+.setrow{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--line)}
+.setrow:first-of-type{border-top:1px solid var(--line)}
+.setrow .fl{margin-bottom:4px}
+.setrow .fv{font-size:13px;color:var(--text2)}
+.setrow .btn{flex:none;white-space:nowrap}
+.setrow .fv.path{font:12px/18px var(--mono);color:var(--text);word-break:break-all}
+.pathbox{font:12px/18px var(--mono);background:var(--deep);border:1px solid var(--line);border-radius:8px;padding:12px;word-break:break-all;color:var(--text)}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,8px);background:var(--raised);border:1px solid var(--line2);color:var(--text);padding:8px 16px;border-radius:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transition:opacity .2s var(--ease),transform .2s var(--ease);z-index:60;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:1080px){
+  .searchbox{width:200px}
+}
+@media (max-width:980px){
+  header{height:auto;flex-wrap:wrap;padding:12px 16px}
+  main{padding:20px 16px 48px}
+  .viewer{grid-template-columns:1fr;grid-template-rows:60vh 1fr}
+  .panel{border-left:0;border-top:1px solid var(--line)}
+  .searchbox{width:100%;order:5}
+  .editor,.form{grid-template-columns:1fr}
+  .drops{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  .thumb,.viewer,.toast,.btn{transition:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Line icons (lucide, ISC licence), inline so the app works offline -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></symbol>
+</svg>
+
+<header>
+  <div class="brand">Decklet</div>
+  <div class="searchbox"><svg class="i"><use href="#i-search"/></svg>
+    <input id="q" class="search" placeholder="Search" aria-label="Search name, company, tags and notes"><span class="kbd" aria-hidden="true">/</span></div>
+  <select id="sort" title="Sort" aria-label="Sort">
+    <option value="added">Newest first</option>
+    <option value="name">Name</option>
+    <option value="company">Company</option>
+  </select>
+  <span class="divider"></span>
+  <button class="btn icon" id="rescanBtn" title="Rescan: read the cards folder again" aria-label="Rescan"><svg class="i"><use href="#i-refresh"/></svg></button>
+  <button class="btn icon" id="settingsBtn" title="Settings" aria-label="Settings"><svg class="i"><use href="#i-settings"/></svg></button>
+  <button class="btn primary" id="addBtn"><svg class="i"><use href="#i-plus"/></svg>Add card</button>
+  <!-- version = Check for updates; last in the tab order, after the main controls -->
+  <button class="ver" id="verBtn" title="Check for updates" aria-describedby="verDesc"></button>
+  <span id="verDesc" hidden>Check GitHub for a newer release.</span>
+</header>
+
+<main>
+  <div class="count" id="count"></div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<!-- 3D viewer -->
+<div class="viewer" id="viewer" aria-hidden="true">
+  <div class="stage" id="stage">
+    <div class="hud-top">
+      <button class="btn icon" id="closeV" title="Close (Esc)" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button>
+      <button class="btn icon" id="prevV" title="Previous (←)" aria-label="Previous card"><svg class="i"><use href="#i-left"/></svg></button>
+      <button class="btn icon" id="nextV" title="Next (→)" aria-label="Next card"><svg class="i"><use href="#i-right"/></svg></button>
+      <div class="side">Showing <b id="sideLbl">front</b></div>
+    </div>
+    <div class="floor" id="floor"></div>
+    <div class="card3d" id="card3d">
+      <div class="edge t"></div><div class="edge b"></div><div class="edge l"></div><div class="edge r"></div>
+      <div class="face front" id="faceF"><div class="glare" id="glareF"></div></div>
+      <div class="face back" id="faceB"><div class="glare" id="glareB"></div></div>
+    </div>
+    <div class="hint" id="hint"><span>Drag to rotate</span><span>Scroll to zoom</span><span><span class="kbd">F</span>Flip</span><span><span class="kbd">R</span>Reset</span></div>
+    <div class="hud">
+      <button class="btn" id="frontBtn">Front</button>
+      <button class="btn" id="flipBtn" title="F">Flip</button>
+      <button class="btn" id="backBtn">Back</button>
+      <span class="sep"></span>
+      <button class="btn" id="spinBtn">Auto-spin</button>
+      <button class="btn" id="resetBtn" title="R">Reset</button>
+    </div>
+  </div>
+  <aside class="panel" id="panel"></aside>
+</div>
+
+<!-- add / edit dialog -->
+<div class="modal" id="editM">
+  <form class="dialog" id="editF" autocomplete="off">
+    <h2 id="editT">Add card</h2>
+    <p class="sub" id="editSub"></p>
+    <div class="editor">
+    <div class="drops">
+      <div class="drop" id="dropF"><div class="lbl">Front</div><span><svg class="i"><use href="#i-image"/></svg><em class="dt">Click or drop a photo</em></span><input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,image/*" hidden multiple></div>
+      <div class="drop" id="dropB"><div class="lbl">Back</div><span><svg class="i"><use href="#i-image"/></svg><em class="dt">Click or drop a photo</em></span><input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,image/*" hidden></div>
+      <button type="button" class="btn swap" id="swapBtn"><svg class="i"><use href="#i-swap"/></svg>Swap front and back</button>
+    </div>
+    <div class="form">
+      <label>Name<input class="field-in" name="name"></label>
+      <label>Company<input class="field-in" name="company"></label>
+      <label>Role<input class="field-in" name="role"></label>
+      <label>Email<input class="field-in" name="email" type="email"></label>
+      <label>Phone<input class="field-in" name="phone"></label>
+      <label>Website<input class="field-in" name="website"></label>
+      <label class="wide">Address<input class="field-in" name="address"></label>
+      <label>Met at<input class="field-in" name="met_at"></label>
+      <label>Date met<input class="field-in" name="met_date" type="date"></label>
+      <label class="wide">Tags<input placeholder="Separate with commas" class="field-in" name="tags"></label>
+      <label class="wide">Notes<textarea class="field-in" name="notes"></textarea></label>
+    </div>
+    </div>
+    <div class="dfoot">
+      <button type="button" class="btn" id="cancelE">Cancel</button>
+      <button type="submit" class="btn primary" id="saveE">Save card</button>
+    </div>
+  </form>
+</div>
+
+<!-- settings -->
+<div class="modal" id="setM">
+  <div class="dialog small">
+    <h2>Settings</h2>
+    <p class="sub">Decklet shows the cards in one folder. Each person is a subfolder with front and back photos.</p>
+    <div class="setrow"><div><div class="fl">Cards folder</div><div class="fv path" id="setRoot">Not chosen</div></div>
+      <button class="btn" id="chooseBtn">Change folder…</button></div>
+    <div class="setrow"><div><div class="fl">Log file</div><div class="fv">Records what Decklet does, to help fix problems.</div></div>
+      <button class="btn" id="logsBtn">View Logs</button></div>
+    <div class="setrow"><div><div class="fl">Feedback</div><div class="fv">Opens the bug form on GitHub in your browser. You need a free GitHub account.</div></div>
+      <button class="btn" id="reportBtn">Report a Problem…</button></div>
+    <div class="dfoot"><button class="btn" id="closeS">Close</button></div>
+  </div>
+</div>
+
+<!-- message dialog (update check, View Logs fallback) -->
+<div class="modal" id="msgM">
+  <div class="dialog small" role="dialog" aria-labelledby="msgT">
+    <h2 id="msgT"></h2>
+    <div id="msgBody"></div>
+    <div class="dfoot" id="msgFoot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ===================== CONFIG ===================== */
+const DRAG_SPEED  = 0.45;           // degrees per pixel dragged
+const FRICTION    = 0.95;           // spin slow-down after release (0-1)
+const SPIN_SPEED  = 0.3;            // auto-spin degrees per frame
+const ZOOM_MIN = 0.5, ZOOM_MAX = 2.4;
+const IMAGE_EXTS = ['.jpg','.jpeg','.png','.webp','.heic'];
+/* ================================================== */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const FIELDS = [['email','Email'],['phone','Phone'],['website','Website'],['address','Address'],['met_at','Met at'],['met_date','Date met']];
+const TOKEN = document.querySelector('meta[name="decklet-token"]').content;
+const isOpenM = m => m.classList.contains('open');
+
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
+
+/* ---------- server API ---------- */
+async function api(path, opts={}){
+  const res = await fetch(path, { ...opts, headers: { 'X-Decklet-Token': TOKEN, ...(opts.headers||{}) } });
+  let data = {};
+  try{ data = await res.json(); }catch(e){}
+  if(!res.ok) throw new Error(data.error || `The app answered with error ${res.status}.`);
+  return data;
+}
+const post = (path, body) => api(path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{}) });
+function reportError(message){ try{ post('/api/log', { message }); }catch(e){} }
+window.addEventListener('error', e => reportError(`${e.message} at ${(e.filename||'').split('/').pop()}:${e.lineno}:${e.colno}\n${e.error?.stack||''}`));
+window.addEventListener('unhandledrejection', e => reportError(`Unhandled promise rejection: ${e.reason?.stack || e.reason}`));
+
+const icon = id => `<svg class="i"><use href="#i-${id}"/></svg>`;
+const media = (kind, side, c) => `/media/${kind}/${side}/${encodeURIComponent(c.id)}?s=${stamp}`;
+
+/* ---------- state ---------- */
+let cards = [], view = [], cur = -1, state = {}, stamp = Date.now();
+try{ const s = localStorage.getItem('decklet.sort'); if(s) $('#sort').value = s; }catch(e){}
+
+async function loadState(){
+  state = await api('/api/state');
+  const vb = $('#verBtn'); vb.textContent = state.version; vb.setAttribute('aria-label', `Version ${state.version}`);
+  $('#setRoot').textContent = state.root || 'Not chosen';
+  $('#logsBtn').title = `Show the log file in ${state.file_manager}`;
+  $('#chooseBtn').disabled = !state.can_choose;
+}
+async function loadCards(announce){
+  try{
+    const r = await api('/api/cards');
+    cards = r.cards; state.root_ok = r.root_ok; stamp = Date.now();
+    render();
+    if(announce) toast(`Found ${cards.length} card${cards.length===1?'':'s'}`);
+  }catch(e){ toast(e.message); }
+}
+$('#rescanBtn').onclick = () => loadCards(true);
+
+/* ---------- gallery ---------- */
+const grid = $('#grid');
+function render(){
+  const q = $('#q').value.trim().toLowerCase();
+  const sort = $('#sort').value;
+  view = cards.filter(c => !q || [c.name,c.company,c.role,c.email,c.phone,c.met_at,c.notes,(c.tags||[]).join(' ')].join(' ').toLowerCase().includes(q));
+  view.sort((a,b) => sort==='added' ? (b.added||0)-(a.added||0) : String(a[sort]||'').localeCompare(String(b[sort]||''), undefined, {sensitivity:'base'}));
+  const plural = n => `${n} card${n===1?'':'s'}`;
+  $('#count').textContent = !state.root_ok ? '' : view.length===cards.length ? plural(cards.length) : `${view.length} of ${plural(cards.length)}`;
+  if(!state.root_ok){
+    const missing = !!state.root;
+    grid.innerHTML = `<div class="empty"><b>${missing ? 'The cards folder is missing' : 'Choose your cards folder'}</b>
+      ${missing ? esc(state.root)+'<br>Connect the drive, or choose the folder again.' : 'Pick the folder that holds one subfolder per person, such as “Business Cards”.'}<br>
+      <button class="btn primary" id="emptyChoose">Choose folder…</button></div>`;
+    $('#emptyChoose').onclick = chooseFolder;
+    return;
+  }
+  grid.innerHTML = view.length ? view.map((c,i) => `
+    <div class="tile" data-i="${i}" tabindex="0" role="button" aria-label="${esc(c.name)}">
+      <div class="thumb">${c.has_front ? `<img src="${media('thumb','front',c)}" alt="" loading="lazy">` : '<div class="noimg">No image</div>'}<div class="shine"></div></div>
+      <div class="meta"><div class="n">${esc(c.name||'Untitled')}</div><div class="c">${esc([c.role,c.company].filter(Boolean).join(' · '))}</div></div>
+    </div>`).join('')
+    : `<div class="empty"><b>${cards.length?'No matches':'No cards yet'}</b>${cards.length?'Try another search.':'Select “+ Add card”, or put one folder per person in the cards folder and select Rescan.'}</div>`;
+  grid.querySelectorAll('.tile').forEach(tile => {
+    const th = tile.querySelector('.thumb');
+    tile.addEventListener('mousemove', e => {
+      const r = th.getBoundingClientRect(), x = (e.clientX-r.left)/r.width, y = (e.clientY-r.top)/r.height;
+      th.style.transform = `rotateX(${(0.5-y)*14}deg) rotateY(${(x-0.5)*18}deg) translateZ(10px)`;
+      th.style.setProperty('--mx', x*100+'%'); th.style.setProperty('--my', y*100+'%');
+    });
+    tile.addEventListener('mouseleave', () => th.style.transform = '');
+    tile.addEventListener('click', () => openViewer(+tile.dataset.i));
+    tile.addEventListener('keydown', e => { if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openViewer(+tile.dataset.i); } });
+  });
+}
+$('#q').addEventListener('input', render);
+$('#sort').addEventListener('change', () => { try{ localStorage.setItem('decklet.sort', $('#sort').value); }catch(e){} render(); });
+
+/* ---------- 3D viewer ---------- */
+const viewer=$('#viewer'), stage=$('#stage'), card3d=$('#card3d'), faceF=$('#faceF'), faceB=$('#faceB');
+let rx=0, ry=0, vx=0, vy=0, zoom=1, zoomT=1, tween=null, dragging=false, autoSpin=false, isOpen=false, aspect=1.75, lastX=0, lastY=0, moved=0;
+
+function sizeCard(){
+  const s = stage.getBoundingClientRect();
+  let w = Math.min(580, s.width*0.7), h = w/aspect;
+  if (h > s.height*0.6){ h = s.height*0.6; w = h*aspect; }
+  card3d.style.setProperty('--w', w+'px'); card3d.style.setProperty('--h', h+'px');
+  card3d.style.setProperty('--t', Math.max(2, w/170)+'px'); card3d.style.setProperty('--r', Math.round(Math.min(w,h)*0.045)+'px');
+  stage.style.setProperty('--w', w+'px'); stage.style.setProperty('--h', h+'px');
+}
+function setFace(el, src, label){
+  el.classList.toggle('missing', !src);
+  el.style.backgroundImage = src ? `url("${src}")` : '';
+  el.querySelector('.lblm')?.remove();
+  if(!src){ const d=document.createElement('div'); d.className='lblm'; d.textContent=label; el.appendChild(d); }
+}
+function openViewer(i, dir=0){
+  if(!view.length) return;
+  cur = (i + view.length) % view.length;
+  const c = view[cur];
+  const fsrc = c.has_front ? media('full','front',c) : '', bsrc = c.has_back ? media('full','back',c) : '';
+  setFace(faceF, fsrc, 'No front image'); setFace(faceB, bsrc, 'No back image');
+  renderPanel(c);
+  aspect = 1.75; sizeCard();
+  if (fsrc){ const im = new Image(); im.onload = () => { if(view[cur]===c){ aspect = im.naturalWidth/im.naturalHeight || 1.75; sizeCard(); } }; im.src = fsrc; }
+  rx = -14; ry = dir>0 ? 70 : dir<0 ? -70 : -45; vx = vy = 0; zoomT = 1;
+  tween = { rx:-6, ry:14 };
+  if(!isOpen){ isOpen = true; viewer.classList.add('open'); viewer.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; requestAnimationFrame(frame); }
+}
+function closeViewer(){ isOpen=false; viewer.classList.remove('open'); viewer.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+
+function frame(){
+  if(!isOpen) return;
+  if(tween){
+    rx += (tween.rx-rx)*0.12; ry += (tween.ry-ry)*0.12;
+    if(Math.abs(tween.rx-rx)<0.05 && Math.abs(tween.ry-ry)<0.05){ rx=tween.rx; ry=tween.ry; tween=null; }
+  } else if(!dragging){
+    rx += vx; ry += vy; vx *= FRICTION; vy *= FRICTION;
+    if(autoSpin && Math.abs(vx)<0.05 && Math.abs(vy)<0.05) ry += SPIN_SPEED;
+  }
+  zoom += (zoomT-zoom)*0.15;
+  apply();
+  requestAnimationFrame(frame);
+}
+function apply(){
+  card3d.style.transform = `scale(${zoom}) rotateX(${rx}deg) rotateY(${ry}deg)`;
+  const d = Math.PI/180;
+  const gx = 50 - Math.sin(ry*d)*75, gy = 35 + Math.sin(rx*d)*75;
+  $('#glareF').style.setProperty('--gx', gx+'%'); $('#glareF').style.setProperty('--gy', gy+'%');
+  $('#glareB').style.setProperty('--gx', (100-gx)+'%'); $('#glareB').style.setProperty('--gy', gy+'%');
+  const facing = Math.cos(rx*d)*Math.cos(ry*d) >= 0;
+  $('#sideLbl').textContent = facing ? 'front' : 'back';
+  const spread = 0.3 + 0.7*Math.abs(Math.cos(ry*d));
+  $('#floor').style.transform = `translateX(-50%) scale(${spread*zoom}, ${zoom})`;
+  $('#floor').style.opacity = 0.4 + 0.6*Math.abs(Math.cos(rx*d));
+}
+const snapFront = () => ({ rx: Math.round(rx/360)*360, ry: Math.round(ry/360)*360 });
+const snapBack  = () => ({ rx: Math.round(rx/360)*360, ry: Math.round((ry-180)/360)*360 + 180 });
+function flip(){ tween = { rx: Math.round(rx/360)*360, ry: Math.round(ry/180)*180 + 180 }; vx=vy=0; }
+function reset(){ tween = snapFront(); zoomT = 1; vx=vy=0; }
+
+stage.addEventListener('pointerdown', e => {
+  if(e.target.closest('button')) return;
+  dragging = true; tween = null; moved = 0; vx = vy = 0;
+  lastX = e.clientX; lastY = e.clientY;
+  stage.setPointerCapture(e.pointerId); stage.classList.add('dragging');
+  $('#hint').style.opacity = 0;
+});
+stage.addEventListener('pointermove', e => {
+  if(!dragging) return;
+  const dx = e.clientX-lastX, dy = e.clientY-lastY; lastX = e.clientX; lastY = e.clientY; moved += Math.abs(dx)+Math.abs(dy);
+  const sign = Math.cos(rx*Math.PI/180) >= 0 ? 1 : -1;    // keep left/right natural when upside down
+  vy = dx*DRAG_SPEED*sign; vx = -dy*DRAG_SPEED;
+  ry += vy; rx += vx;
+});
+const endDrag = () => { dragging = false; stage.classList.remove('dragging'); };
+stage.addEventListener('pointerup', endDrag); stage.addEventListener('pointercancel', endDrag);
+stage.addEventListener('dblclick', e => { if(!e.target.closest('button')) flip(); });
+stage.addEventListener('wheel', e => { e.preventDefault(); zoomT = clamp(zoomT*Math.exp(-e.deltaY*0.0015), ZOOM_MIN, ZOOM_MAX); }, { passive:false });
+window.addEventListener('resize', () => { if(isOpen) sizeCard(); });
+
+$('#closeV').onclick = closeViewer;
+$('#prevV').onclick = () => openViewer(cur-1, -1);
+$('#nextV').onclick = () => openViewer(cur+1, 1);
+$('#flipBtn').onclick = flip;
+$('#frontBtn').onclick = () => { tween = snapFront(); };
+$('#backBtn').onclick  = () => { tween = snapBack(); };
+$('#resetBtn').onclick = reset;
+$('#spinBtn').onclick = e => { autoSpin = !autoSpin; e.currentTarget.classList.toggle('on', autoSpin); };
+
+/* ---------- info panel ---------- */
+function fieldHTML(k, v){
+  const t = esc(v);
+  if(k==='email') return `<a href="mailto:${t}">${t}</a>`;
+  if(k==='phone') return `<a href="tel:${esc(String(v).replace(/[^\d+]/g,''))}">${t}</a>`;
+  if(k==='website'){ const u = /^https?:\/\//i.test(v) ? v : 'https://'+v; return `<a href="${esc(u)}" target="_blank" rel="noopener">${t}</a>`; }
+  if(k==='met_date'){ const d = new Date(v+'T00:00'); return isNaN(d) ? t : d.toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}); }
+  return t;
+}
+function renderPanel(c){
+  $('#panel').innerHTML = `
+    <div class="pname">${esc(c.name||'Untitled')}</div>
+    <div class="prole">${esc([c.role,c.company].filter(Boolean).join(' · '))}</div>
+    ${c.details_error ? `<div class="warn">${esc(c.details_error)}. Decklet shows the folder name and images only. Fix the file in a text editor, then select Rescan.</div>` : ''}
+    <div class="fields">${FIELDS.filter(([k])=>c[k]).map(([k,l]) => `
+      <div class="field"><div><div class="fl">${l}</div><div class="fv">${fieldHTML(k,c[k])}</div></div>
+      ${['email','phone','website','address'].includes(k)?`<button class="copy" data-copy="${esc(c[k])}" title="Copy ${l.toLowerCase()}" aria-label="Copy ${l.toLowerCase()}">${icon('copy')}</button>`:''}</div>`).join('')}</div>
+    ${(c.tags||[]).length ? `<div class="tags">${c.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+    ${c.notes ? `<div class="notes">${esc(c.notes)}</div>` : ''}
+    <div class="files" title="The files behind this card"><b>${esc(c.id)} /</b><br>${[c.front_file, c.back_file, c.has_details ? 'card.json' : ''].filter(Boolean).map(esc).join(' · ') || '<span class="none">no images</span>'}</div>
+    <div class="pactions">
+      <button class="btn" id="vcardBtn">Copy vCard</button>
+      <button class="btn" id="editBtn" ${c.details_error?'disabled':''}>Edit</button>
+      <button class="btn danger" id="delBtn" title="Moves the folder to _deleted in the cards folder">Delete</button>
+    </div>`;
+  $('#editBtn').onclick = () => openEditor(c);
+  $('#vcardBtn').onclick = () => copyText(toVCard(c), 'vCard copied');
+  const del = $('#delBtn');
+  del.onclick = async () => {
+    if(!del.classList.contains('armed')){ del.classList.add('armed'); del.textContent='Move to _deleted?'; setTimeout(()=>{ del.classList.remove('armed'); del.textContent='Delete'; },3000); return; }
+    del.disabled = true;
+    try{
+      await api('/api/cards/'+encodeURIComponent(c.id), { method:'DELETE' });
+      toast(`Moved “${c.id}” to _deleted`);
+      cards = cards.filter(x => x.id !== c.id); render();
+      view.length ? openViewer(Math.min(cur, view.length-1)) : closeViewer();
+    }catch(e){ toast(e.message); del.disabled = false; }
+  };
+}
+$('#panel').addEventListener('click', e => { const b = e.target.closest('[data-copy]'); if(b) copyText(b.dataset.copy, 'Copied'); });
+function copyText(s, ok){
+  const fallback = () => {
+    const ta = document.createElement('textarea'); ta.value = s; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select();
+    let done = false; try{ done = document.execCommand('copy'); }catch(e){} ta.remove(); toast(done ? ok : 'Copy did not work here');
+  };
+  if(navigator.clipboard?.writeText) navigator.clipboard.writeText(s).then(()=>toast(ok)).catch(fallback); else fallback();
+}
+function toVCard(c){
+  const e = s => String(s||'').replace(/([,;\\])/g,'\\$1').replace(/\n/g,'\\n');
+  const parts = (c.name||'').trim().split(/\s+/); const last = parts.length>1 ? parts.pop() : ''; const first = parts.join(' ');
+  return ['BEGIN:VCARD','VERSION:3.0',`N:${e(last)};${e(first)};;;`,`FN:${e(c.name)}`,
+    c.company&&`ORG:${e(c.company)}`, c.role&&`TITLE:${e(c.role)}`, c.email&&`EMAIL;TYPE=WORK:${c.email}`,
+    c.phone&&`TEL;TYPE=WORK:${c.phone}`, c.website&&`URL:${c.website}`, c.address&&`ADR;TYPE=WORK:;;${e(c.address)};;;;`,
+    c.notes&&`NOTE:${e(c.notes)}`, 'END:VCARD'].filter(Boolean).join('\r\n');
+}
+
+/* ---------- add / edit ---------- */
+// draft[side] = { file, url } for a newly chosen image, { existing:url } for one already in the folder, or null.
+let editing = null, draft = { front:null, back:null };
+const editM=$('#editM'), editF=$('#editF'), dropF=$('#dropF'), dropB=$('#dropB');
+const dropOf = side => side==='front' ? dropF : dropB;
+function showDrops(){
+  for(const side of ['front','back']){
+    const el = dropOf(side), d = draft[side];
+    const src = d ? (d.url || d.existing) : '';
+    el.classList.toggle('has', !!src);
+    el.classList.toggle('locked', !!d?.existing);
+    el.title = d?.existing ? 'Decklet never replaces image files. Change it in the folder.' : '';
+    el.style.backgroundImage = src && !d.heic ? `url("${src}")` : '';
+    el.querySelector('.dt').textContent = d?.heic ? `${d.file.name} (preview after saving)` : 'Click or drop a photo';
+    if(d?.heic) el.classList.remove('has');
+  }
+}
+function clearDraft(){ for(const s of ['front','back']) if(draft[s]?.url) URL.revokeObjectURL(draft[s].url); draft = { front:null, back:null }; }
+function openEditor(c){
+  editing = c || null;
+  $('#editT').textContent = c ? 'Edit card' : 'Add card';
+  $('#editSub').textContent = c
+    ? 'Changes are saved to card.json in the card’s folder. Existing images stay as they are.'
+    : 'Drop the front and back photos (or drop both on Front at once). Decklet makes a new folder and copies the photos in.';
+  $('#swapBtn').hidden = !!c;
+  editF.reset(); clearDraft();
+  if(c){
+    draft.front = c.has_front ? { existing: media('thumb','front',c) } : null;
+    draft.back  = c.has_back  ? { existing: media('thumb','back',c) }  : null;
+    for(const el of editF.elements){ if(el.name) el.value = el.name==='tags' ? (c.tags||[]).join(', ') : (c[el.name] || ''); }
+  }
+  showDrops();
+  editM.classList.add('open'); setTimeout(()=>editF.elements.name.focus(), 50);
+}
+const closeEditor = () => { editM.classList.remove('open'); clearDraft(); };
+const isImage = f => IMAGE_EXTS.some(x => f.name.toLowerCase().endsWith(x));
+function setDraft(side, file){
+  if(draft[side]?.existing) return;
+  if(draft[side]?.url) URL.revokeObjectURL(draft[side].url);
+  const heic = file.name.toLowerCase().endsWith('.heic');
+  draft[side] = { file, url: URL.createObjectURL(file), heic };
+}
+function takeFiles(side, files){
+  const imgs = [...files].filter(isImage);
+  if(!imgs.length) return toast('Use a .jpg, .jpeg, .png, .webp or .heic image');
+  if(draft[side]?.existing) return toast('Decklet never replaces image files');
+  if(side==='front' && imgs.length>1 && !draft.back?.existing){ setDraft('front', imgs[0]); setDraft('back', imgs[1]); }
+  else setDraft(side, imgs[0]);
+  showDrops();
+}
+[[dropF,'front'],[dropB,'back']].forEach(([el, side]) => {
+  const inp = el.querySelector('input');
+  el.addEventListener('click', () => { if(!draft[side]?.existing) inp.click(); });
+  inp.addEventListener('change', () => { takeFiles(side, inp.files); inp.value=''; });
+  el.addEventListener('dragover', e => { e.preventDefault(); if(!draft[side]?.existing) el.classList.add('over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('over'));
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('over'); takeFiles(side, e.dataTransfer.files); });
+});
+$('#swapBtn').onclick = () => { [draft.front, draft.back] = [draft.back, draft.front]; showDrops(); };
+$('#cancelE').onclick = closeEditor;
+editF.addEventListener('submit', async e => {
+  e.preventDefault();
+  const data = {};
+  for(const el of editF.elements) if(el.name) data[el.name] = el.value.trim();
+  data.tags = data.tags ? data.tags.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  if(!editing && !data.name) return toast('Enter a name. It is used as the folder name.');
+  const fd = new FormData();
+  fd.append('details', JSON.stringify(data));
+  for(const side of ['front','back']) if(draft[side]?.file) fd.append(side, draft[side].file, draft[side].file.name);
+  const btn = $('#saveE'); btn.disabled = true;
+  try{
+    const r = editing
+      ? await api('/api/cards/'+encodeURIComponent(editing.id), { method:'PUT', body: fd })
+      : await api('/api/cards', { method:'POST', body: fd });
+    const wasEditing = !!editing;
+    closeEditor();
+    toast(wasEditing ? 'Card saved' : `Card added as “${r.card.id}”`);
+    await loadCards();
+    const i = view.findIndex(c => c.id===r.card.id);
+    if(i>=0 && (isOpen || !wasEditing)) openViewer(i);
+  }catch(err){ toast(err.message); }
+  finally{ btn.disabled = false; }
+});
+$('#addBtn').onclick = () => { if(!state.root_ok) return chooseFolder(); openEditor(null); };
+
+/* ---------- settings ---------- */
+const setM = $('#setM');
+$('#settingsBtn').onclick = () => setM.classList.add('open');
+$('#closeS').onclick = () => setM.classList.remove('open');
+async function chooseFolder(){
+  try{
+    const r = await post('/api/choose-folder');
+    if(r.changed){ await loadState(); await loadCards(true); }
+  }catch(e){ toast(e.message); }
+}
+$('#chooseBtn').onclick = chooseFolder;
+$('#logsBtn').onclick = async () => {
+  try{
+    const r = await post('/api/view-logs');
+    if(!r.ok) showMessage('View Logs', `<p class="sub">Decklet could not open ${esc(state.file_manager)}. The log file is here:</p><div class="pathbox">${esc(r.path)}</div>`,
+      [['Copy Path', () => copyText(r.path, 'Path copied'), true], ['Close']]);
+  }catch(e){ toast(e.message); }
+};
+$('#reportBtn').onclick = () => post('/api/open', { what:'report' }).then(()=>toast('Opened in your browser')).catch(e=>toast(e.message));
+
+/* ---------- message dialog ---------- */
+const msgM = $('#msgM');
+function showMessage(title, html, buttons){
+  $('#msgT').textContent = title; $('#msgBody').innerHTML = html;
+  const foot = $('#msgFoot'); foot.innerHTML = '';
+  for(const [label, fn, primary] of buttons){
+    const b = document.createElement('button'); b.className = 'btn' + (primary ? ' primary' : ''); b.textContent = label;
+    b.onclick = () => { msgM.classList.remove('open'); fn?.(); };
+    foot.appendChild(b);
+  }
+  msgM.classList.add('open');
+  foot.querySelector('.primary, .btn')?.focus();
+}
+
+/* ---------- check for updates ---------- */
+const verBtn = $('#verBtn');
+verBtn.onclick = async () => {
+  if(verBtn.disabled) return;
+  verBtn.disabled = true; verBtn.textContent = 'checking…';
+  try{
+    const r = await post('/api/update-check');
+    if(r.newer){ verBtn.classList.add('newer'); verBtn.title = `${r.latest} is available. Click for details.`; }
+    const notes = r.notes ? `<details><summary>Release notes</summary><pre>${esc(r.notes)}</pre></details>` : '';
+    const open = ['Open release page', () => post('/api/open', { what:'release' }).catch(e=>toast(e.message)), true];
+    showMessage('Check for updates', `<p class="headline">${esc(r.headline)}</p><p class="sub">${esc(r.detail)}</p>${notes}`,
+      r.offers_page ? [open, ['Close']] : [['Close', null, true]]);
+  }catch(e){
+    showMessage('Check for updates', `<p class="sub">${esc(e.message)}</p>`, [['Close', null, true]]);
+  }finally{
+    verBtn.textContent = state.version; verBtn.disabled = false;
+  }
+};
+
+[editM, setM, msgM].forEach(m => m.addEventListener('mousedown', e => { if(e.target===m){ m===editM ? closeEditor() : m.classList.remove('open'); } }));
+
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown', e => {
+  const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if(e.key==='Escape'){
+    if(isOpenM(msgM)) return msgM.classList.remove('open');
+    if(isOpenM(editM)) return closeEditor();
+    if(isOpenM(setM)) return setM.classList.remove('open');
+    if(isOpen) return closeViewer();
+  }
+  if(typing) return;
+  if(e.key==='/' && !isOpen){ e.preventDefault(); $('#q').focus(); return; }
+  if(!isOpen || isOpenM(editM) || isOpenM(setM) || isOpenM(msgM)) return;
+  const k = e.key.toLowerCase();
+  if(k==='f') flip();
+  else if(k==='r') reset();
+  else if(e.key==='ArrowRight') openViewer(cur+1, 1);
+  else if(e.key==='ArrowLeft') openViewer(cur-1, -1);
+  else if(e.key==='ArrowUp'){ e.preventDefault(); vx -= 3; }
+  else if(e.key==='ArrowDown'){ e.preventDefault(); vx += 3; }
+});
+
+loadState().then(() => loadCards()).catch(e => toast(e.message));
+</script>
+</body>
+</html>
