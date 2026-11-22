@@ -2,7 +2,9 @@
 
 import io
 import json
+import ssl
 import urllib.error
+import urllib.request
 
 import pytest
 
@@ -103,3 +105,20 @@ def test_connection_error_and_bad_json():
         uc.check("1.0.0", opener=offline)
     with pytest.raises(uc.UpdateError, match="can't read"):
         uc.check("1.0.0", opener=lambda r, timeout: FakeResp(b"<html>"))
+
+
+def test_check_uses_the_operating_system_certificate_check(monkeypatch):
+    # Python's own check failed on Windows with "unable to get issuer certificate"; truststore asks the OS instead.
+    import truststore
+
+    seen = {}
+
+    def fake_urlopen(req, timeout, context=None):
+        seen["context"] = context
+        return FakeResp(json.dumps(release()).encode())
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    uc.check("1.3.0")
+    ctx = seen["context"]
+    assert isinstance(ctx, truststore.SSLContext)
+    assert ctx.verify_mode == ssl.CERT_REQUIRED and ctx.check_hostname

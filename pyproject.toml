@@ -16,6 +16,7 @@ dependencies = [
     "pywebview>=6",
     "opencv-python-headless>=4.10",  # finds the card's corners so front and back line up
     "numpy>=1.26",
+    "truststore>=0.10",  # the update check uses the operating system's certificate check
     # Linux uses the Qt web view, because it can be bundled into one file.
     "PyQt6>=6.7; sys_platform == 'linux'",
     "PyQt6-WebEngine>=6.7; sys_platform == 'linux'",

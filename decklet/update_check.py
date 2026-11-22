@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+import ssl
 import time
 import urllib.error
 import urllib.request
@@ -85,7 +86,23 @@ def parse_release(data, current: str) -> UpdateInfo:
     return UpdateInfo(current=current, latest=display_version(tag.strip()), url=url, notes=notes)
 
 
-def check(current: str = __version__, opener=urllib.request.urlopen) -> UpdateInfo:
+def ssl_context() -> ssl.SSLContext:
+    """Checks GitHub's certificate with the operating system's own verifier (truststore).
+
+    Python's default check reads a copy of the system certificates. Windows keeps only some root certificates
+    and downloads the rest when its own verifier asks, so the copy can lack GitHub's root
+    ("unable to get issuer certificate"). A built macOS app has no certificate file at all.
+    """
+    import truststore
+
+    return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
+
+def _urlopen(req, timeout):
+    return urllib.request.urlopen(req, timeout=timeout, context=ssl_context())
+
+
+def check(current: str = __version__, opener=_urlopen) -> UpdateInfo:
     """One GET to GitHub. Blocks, so callers run it off the UI thread."""
     req = urllib.request.Request(
         LATEST_URL, headers={"User-Agent": USER_AGENT, "Accept": "application/vnd.github+json"}
