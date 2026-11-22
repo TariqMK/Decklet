@@ -149,10 +149,11 @@ jobs:
             Linux) exe="dist/$APP_NAME" ;;
           esac
           if [ "$RUNNER_OS" != macOS ]; then
-            pyi-archive_viewer --list --recursive "$exe" > contents.txt
-            grep -E "decklet.web.index\.html" contents.txt
-            grep -E "decklet.web.fonts.inter-latin-400-normal\.woff2" contents.txt
-            grep -E "decklet.icon\.png" contents.txt
+            # Names are printed with repr(), so Windows paths appear as decklet\\web\\...; turn them into decklet/web/...
+            pyi-archive_viewer --list --recursive "$exe" | tr -s '\\' '/' > contents.txt
+            for f in decklet/web/index.html decklet/web/fonts/inter-latin-400-normal.woff2 decklet/icon.png; do
+              grep -F "'$f'" contents.txt || { echo "::error::$f is missing from the build"; exit 1; }
+            done
             ls dist
             test "$(ls dist | wc -l)" -eq 1 # nothing beside the executable
           fi
