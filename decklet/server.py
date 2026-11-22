@@ -111,30 +111,41 @@ def create_app(backend: Backend) -> Flask:
 
     # ---------- images ----------
 
-    def card_image(card_id: str, side: str) -> Path:
-        if side not in SIDES:
-            abort(404)
+    def find_card(person_id: str, key: str):
         try:
-            card = backend.library.get(card_id)
+            person = backend.library.get(person_id)
+            return person, person.card(key)
         except LibraryError:
             abort(404)
+
+    def aligned(card) -> dict:
+        """Straightened faces of one card; falls back to the plain photos if alignment fails."""
+        try:
+            return images.aligned_pair(card.front, card.back, card.details.get("corners"), backend.cache_dir)
+        except Exception as e:  # noqa: BLE001 - a bad photo must still show
+            log.warning("Could not align %s: %s", card.folder.name, e)
+            return {
+                s: images.display_file(getattr(card, s), backend.cache_dir) for s in SIDES if getattr(card, s)
+            }
+
+    @app.get("/media/<kind>/<side>/<path:person_id>")
+    def media(kind, side, person_id):
+        """kind: thumb (gallery), full (straightened face for the 3D view), original (photo as taken)."""
+        if side not in SIDES or kind not in ("thumb", "full", "original"):
+            abort(404)
+        _, card = find_card(person_id, request.args.get("c", ""))
         src = getattr(card, side)
         if src is None or not src.is_file():
             abort(404)
-        return src
-
-    @app.get("/media/<kind>/<side>/<path:card_id>")
-    def media(kind, side, card_id):
-        src = card_image(card_id, side)
         try:
-            if kind == "thumb":
-                out = images.thumbnail(src, backend.cache_dir)
-            elif kind == "full":
+            if kind == "original":
                 out = images.display_file(src, backend.cache_dir)
             else:
-                abort(404)
+                out = aligned(card)[side]
+                if kind == "thumb":
+                    out = images.thumbnail(out, backend.cache_dir)
         except OSError as e:
-            log.warning("Could not read image %s/%s: %s", card_id, src.name, e)
+            log.warning("Could not read image %s/%s: %s", person_id, src.name, e)
             abort(415)
         return send_file(out, max_age=0, conditional=True)
 
@@ -159,7 +170,7 @@ def create_app(backend: Backend) -> Flask:
             if lib.root:
                 log.warning("Cards folder is missing: %s", lib.root)
             return jsonify(cards=[], root_ok=False)
-        return jsonify(cards=[c.to_json() for c in lib.rescan()], root_ok=True)
+        return jsonify(cards=[p.to_json() for p in lib.rescan()], root_ok=True)
 
     def read_form() -> tuple[dict, dict]:
         try:
@@ -175,22 +186,67 @@ def create_app(backend: Backend) -> Flask:
                 imgs[side] = (f.filename, f.read())
         return details, imgs
 
+    def ids() -> tuple[str, str]:
+        person_id = request.args.get("p", "")
+        if not person_id:
+            abort(400)
+        return person_id, request.args.get("c", "")
+
     @app.post("/api/cards")
+    def add_person():
+        details, imgs = read_form()
+        person = backend.library.add(details, imgs)
+        return jsonify(card=person.to_json(), key="")
+
+    @app.post("/api/card")
     def add_card():
+        person_id, _ = ids()
         details, imgs = read_form()
-        card = backend.library.add(details, imgs)
-        return jsonify(card=card.to_json())
+        person, key = backend.library.add_card(person_id, request.form.get("label", ""), details, imgs)
+        return jsonify(card=person.to_json(), key=key)
 
-    @app.put("/api/cards/<path:card_id>")
-    def update_card(card_id):
+    @app.put("/api/card")
+    def update_card():
+        person_id, key = ids()
         details, imgs = read_form()
-        card = backend.library.update(card_id, details, imgs)
-        return jsonify(card=card.to_json())
+        person = backend.library.update(person_id, key, details, imgs)
+        return jsonify(card=person.to_json(), key=key)
 
-    @app.delete("/api/cards/<path:card_id>")
-    def delete_card(card_id):
-        moved_as = backend.library.delete(card_id)
+    @app.delete("/api/card")
+    def delete_card():
+        person_id, key = ids()
+        moved_as = backend.library.delete(person_id, key)
         return jsonify(ok=True, moved_as=moved_as)
+
+    @app.get("/api/corners")
+    def get_corners():
+        """Corners in use for each photo of a card (hand-placed or found), for the Adjust corners view."""
+        person_id, key = ids()
+        _, card = find_card(person_id, key)
+        saved = card.details.get("corners") or {}
+        out = {}
+        for side in SIDES:
+            src = getattr(card, side)
+            if src is None:
+                continue
+            corners, manual = images.face_corners(src, saved.get(side), backend.cache_dir)
+            auto = images.auto_corners(src, backend.cache_dir) or images.FULL_FRAME
+            out[side] = {"corners": corners, "manual": manual, "auto": auto}
+        return jsonify(out)
+
+    @app.put("/api/corners")
+    def put_corners():
+        person_id, key = ids()
+        data = request.get_json(silent=True) or {}
+        corners = {}
+        for side in SIDES:
+            if side in data:
+                value = data[side]
+                if value is not None and images.valid_corners(value) is None:
+                    raise LibraryError("Those corners could not be read.")
+                corners[side] = value
+        person = backend.library.set_corners(person_id, key, corners)
+        return jsonify(card=person.to_json(), key=key)
 
     @app.post("/api/choose-folder")
     def choose_folder():

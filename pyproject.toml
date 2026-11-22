@@ -14,6 +14,8 @@ dependencies = [
     "pillow>=11",
     "pillow-heif>=0.21",
     "pywebview>=6",
+    "opencv-python-headless>=4.10",  # finds the card's corners so front and back line up
+    "numpy>=1.26",
     # Linux uses the Qt web view, because it can be bundled into one file.
     "PyQt6>=6.7; sys_platform == 'linux'",
     "PyQt6-WebEngine>=6.7; sys_platform == 'linux'",

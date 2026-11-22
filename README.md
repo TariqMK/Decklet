@@ -6,15 +6,23 @@ Keep your paper business cards as photos and turn them over in 3D, like holding 
 
 ## What it does
 
-Decklet shows the business cards in one folder on your computer. Each person is a subfolder with a photo of the front and the back. Decklet reads that folder. It does not keep its own copy of your cards.
+Decklet shows the business cards in one folder on your computer. Each person is a subfolder with a photo of the front and the back, plus one more subfolder for each extra card they gave you. Decklet reads that folder. It does not keep its own copy of your cards.
 
 ### A gallery of every card
 
-Each card shows as a photo tile. Search by name, company, tag or notes, and sort by newest, name or company.
+Each person shows as a photo tile of their newest card. A person with more than one card shows a small stack and the number of cards. Search by name, company, tag or notes, and sort by newest, name or company.
 
 ### Turn a card over in 3D
 
 Select a card to see it in 3D. Drag to rotate it, scroll to zoom, and double-click to flip it. The light moves across the card as it turns.
+
+### Front and back always line up
+
+Decklet finds the edges of the card in each photo, straightens it and crops away the table around it. The front and back come out exactly the same size, so the 3D card has clean edges even when the two photos were taken differently. If Decklet misses an edge, drag the corners into place yourself with **Adjust corners**.
+
+### Every card someone gave you
+
+When someone gives you a new card, for example after they change jobs, add it to the same person. Their name, tags and notes stay shared. Each card keeps its own company, role, email, phone, website and address.
 
 ### Contact details next to the card
 
@@ -22,13 +30,13 @@ The panel beside the card shows the name, role, company, email, phone, website, 
 
 ### Your folder stays yours
 
-Decklet never moves, renames or changes your photos. It writes a small `card.json` file only when you edit a card. Delete moves the person's folder into a `_deleted` folder. Nothing is removed for good.
+Decklet never moves, renames or changes your photos. Straightened copies for the 3D view are kept in Decklet's own folder. Decklet writes a small `card.json` file only when you edit a card or adjust its corners. Delete moves the folder into a `_deleted` folder. Nothing is removed for good.
 
 ## Privacy
 
 - Decklet works offline. Your cards never leave your computer.
 - No accounts, no tracking, no adverts.
-- Your cards stay in the folder you choose. Decklet's own settings, thumbnails and log file are kept in the `Decklet-data` folder next to the app.
+- Your cards stay in the folder you choose. Decklet's own settings, thumbnails, straightened copies of your photos and log file are kept in the `Decklet-data` folder next to the app.
 - The app keeps a log file, `Decklet.log`, in the `Decklet-data` folder. It records what the app does and any errors, including file names, to help fix problems. It never leaves your computer unless you send it. To find it, select **View Logs** in Settings.
 - When you select the version number, the app asks GitHub (api.github.com) for the latest release. It sends nothing else and nothing is downloaded.
 - Report a Problem opens a page on GitHub in your browser. Nothing is sent until you submit it there.
@@ -68,22 +76,29 @@ You can run this instead:
 
 ### Set up your cards folder
 
-Make one folder for your cards, for example `Business Cards`. Put one subfolder in it for each person:
+Make one folder for your cards, for example `Business Cards`. Put one subfolder in it for each person. For each extra card from the same person, put a subfolder inside their folder:
 
 ```
 Business Cards/
 ├── Maya Okafor/
-│   ├── front.jpg
+│   ├── front.jpg          (her main card)
 │   ├── back.jpg
-│   └── card.json      (optional, Decklet makes it when you edit)
+│   ├── card.json          (optional, Decklet makes it when you edit)
+│   └── Halcyon 2026/      (another card from Maya)
+│       ├── front.jpg
+│       ├── back.jpg
+│       └── card.json      (optional, details printed on this card)
 └── Elias Brandt/
     ├── front.jpg
     └── back.jpg
 ```
 
-- The folder name is the person's name until you edit the card.
+- The person's folder name is their name until you edit the card.
 - Photos can be `.jpg`, `.jpeg`, `.png`, `.webp` or `.heic`.
 - Name the photos `front` and `back`. If they have other names, Decklet uses the first one in alphabetical order as the front and the second as the back. A single photo is the front.
+- A person can have only card subfolders and no photos of their own.
+- Decklet skips folders whose names start with `_` or `.`.
+- The person's `card.json` holds their name, tags, notes and where you met. A card subfolder's `card.json` holds the company, role, email, phone, website and address printed on that card. A card subfolder without `card.json` shows the person's details.
 
 ### Open your cards
 
@@ -103,7 +118,8 @@ To use a different folder later, select **Settings** (the sliders button at the 
 | Show the front or back | Select **Front** or **Back** |
 | Spin the card slowly | Select **Auto-spin** |
 | Straighten the card | Press **R** or select **Reset** |
-| Next or previous card | Press **→** or **←** |
+| Next or previous person | Press **→** or **←** |
+| Next or previous card of the same person | Press **↓** or **↑**, or use the arrows next to **Card 1 of 2** in the panel |
 | Close the 3D view | Press **Esc** |
 | Search | Press **/** |
 
@@ -116,20 +132,45 @@ To use a different folder later, select **Settings** (the sliders button at the 
 
 Decklet makes a new folder with the person's name. It copies the photos in as `front` and `back` and writes `card.json`. Your original photos stay where they are.
 
+### Add another card for the same person
+
+1. Open one of the person's cards.
+2. Select **Add card for** and the person's first name, for example **Add card for Maya**.
+3. Type a **Card name**, for example `Halcyon 2026`. If you leave it empty, Decklet uses the company and the year.
+4. Drop the photos and type the details printed on this card.
+5. Select **Save card**.
+
+Decklet makes the card name a subfolder inside the person's folder and copies the photos in.
+
+### Line up the front and back
+
+Decklet straightens every card on its own. If the edges look wrong:
+
+1. Open the card.
+2. Select **Adjust corners**.
+3. Drag the four corners onto the corners of the card in each photo. The gold corner and line mark the card's top edge.
+4. If the card comes out on its side, select **Rotate** until the gold line is along the top.
+5. Select **Save corners**.
+
+To go back to Decklet's own corners, select **Automatic**, then **Save corners**. Decklet saves the corners in the card's `card.json`. The photos are not changed.
+
 ### Edit a card
 
 1. Open the card.
 2. Select **Edit**.
 3. Change the details and select **Save card**.
 
-Decklet saves the details in `card.json` in the person's folder. The folder name and the photos stay the same. If a card has no back photo yet, you can add one in **Edit**. To change a photo that is already there, replace the file in the folder and select **Rescan**.
+Decklet saves the name, tags, notes and where you met in the person's `card.json`. It saves the details printed on the card in that card's `card.json`. The folder names and the photos stay the same. If a card has no back photo yet, you can add one in **Edit**. To change a photo that is already there, replace the file in the folder and select **Rescan**.
 
 ### Delete a card
 
 1. Open the card.
-2. Select **Delete**, then select **Move to _deleted?** within 3 seconds.
+2. Select **Delete**. The button asks what it will move, for example **Move “Halcyon 2026” to _deleted?**. Select it again within 3 seconds.
 
-Decklet moves the person's folder into `_deleted` inside your cards folder. To bring the card back, move its folder out of `_deleted` and select **Rescan**.
+> [!WARNING]
+> Delete on a person's main card moves the whole person folder, with all their cards. Delete on a card subfolder moves only that card.
+
+Decklet moves the folder into `_deleted` inside your cards folder. A single card is named after the person and the card, for example `Maya Okafor - Halcyon 2026`. To bring a card back, move its folder back where it was and select **Rescan**.
 
 ### See changes made in the folder
 
@@ -200,8 +241,8 @@ flowchart LR
 |---|---|
 | `decklet/__main__.py` | Starts logging, the server and the window |
 | `decklet/server.py` | Routes for the page, images and the JSON API |
-| `decklet/library.py` | Reads person folders. Writes `card.json`, new card folders and `_deleted` moves |
-| `decklet/images.py` | Thumbnails and JPEG copies of HEIC photos, in `Decklet-data/cache` |
+| `decklet/library.py` | Reads person folders and their card subfolders. Writes `card.json`, new folders and `_deleted` moves |
+| `decklet/images.py` | Finds the card's corners (OpenCV), makes straightened faces of the same size, thumbnails and HEIC copies, all in `Decklet-data/cache` |
 | `decklet/paths.py` | Data folder next to the app, bundled files, `settings.json` |
 | `decklet/app_log.py` | `Decklet.log` and View Logs |
 | `decklet/update_check.py` | The manual update check |

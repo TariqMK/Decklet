@@ -37,7 +37,8 @@ def test_list_and_images(client):
     assert [c["name"] for c in data["cards"]] == ["Elias Brandt", "Maya Okafor"]
     r = client.get("/media/thumb/front/Maya%20Okafor")
     assert r.status_code == 200 and r.mimetype == "image/jpeg"
-    assert client.get("/media/full/back/Elias%20Brandt").mimetype == "image/png"
+    assert client.get("/media/full/back/Elias%20Brandt").mimetype == "image/jpeg"  # straightened copy
+    assert client.get("/media/original/back/Elias%20Brandt").mimetype == "image/png"  # the photo as taken
     assert client.get("/media/full/back/..%2F..%2Fetc").status_code == 404
     assert client.get("/media/full/side/Maya%20Okafor").status_code == 404
 
@@ -56,21 +57,21 @@ def test_add_edit_delete_round_trip(client, root):
     assert r.status_code == 200, r.get_json()
     assert (root / "Tom Hale" / "front.jpg").read_bytes() == b"JPEGDATA"
     r = client.put(
-        "/api/cards/Tom%20Hale",
+        "/api/card?p=Tom%20Hale",
         headers=client.h,
         content_type="multipart/form-data",
         data={"details": json.dumps({"name": "Tom Hale", "role": "Head Roaster"})},
     )
-    assert r.get_json()["card"]["role"] == "Head Roaster"
+    assert r.get_json()["card"]["cards"][0]["role"] == "Head Roaster"
     r = client.put(
-        "/api/cards/Tom%20Hale",
+        "/api/card?p=Tom%20Hale",
         headers=client.h,
         content_type="multipart/form-data",
         data={"details": "{}", "front": (io.BytesIO(b"NEW"), "x.jpg")},
     )
     assert r.status_code == 400 and "never replaces" in r.get_json()["error"]
     assert (root / "Tom Hale" / "front.jpg").read_bytes() == b"JPEGDATA"
-    assert client.delete("/api/cards/Tom%20Hale", headers=client.h).status_code == 200
+    assert client.delete("/api/card?p=Tom%20Hale", headers=client.h).status_code == 200
     assert (root / "_deleted" / "Tom Hale" / "card.json").exists()
 
 
@@ -115,3 +116,35 @@ def test_local_server_binds_without_reverse_dns(client, monkeypatch):
         assert srv.server_address[0] == "127.0.0.1" and srv.server_port > 0
     finally:
         srv.server_close()
+
+
+def test_add_card_corners_and_aligned_images(client, root):
+    client.get("/api/cards", headers=client.h)
+    front = (root / "Maya Okafor" / "front.jpg").read_bytes()
+    r = client.post(
+        "/api/card?p=Maya%20Okafor",
+        headers=client.h,
+        content_type="multipart/form-data",
+        data={
+            "details": json.dumps({"company": "Halcyon"}),
+            "label": "Halcyon",
+            "front": (io.BytesIO(front), "f.jpg"),
+        },
+    )
+    assert r.status_code == 200 and r.get_json()["key"] == "Halcyon"
+    assert client.get("/media/full/front/Maya%20Okafor?c=Halcyon").status_code == 200
+    assert client.get("/media/original/front/Maya%20Okafor?c=Halcyon").status_code == 200
+    assert client.get("/media/full/front/Maya%20Okafor?c=Nope").status_code == 404
+    got = client.get("/api/corners?p=Maya%20Okafor&c=Halcyon", headers=client.h).get_json()
+    assert got["front"]["manual"] is False and len(got["front"]["auto"]) == 4
+    pts = [[0.1, 0.1], [0.9, 0.1], [0.9, 0.9], [0.1, 0.9]]
+    assert (
+        client.put(
+            "/api/corners?p=Maya%20Okafor&c=Halcyon", headers=client.h, json={"front": pts}
+        ).status_code
+        == 200
+    )
+    again = client.get("/api/corners?p=Maya%20Okafor&c=Halcyon", headers=client.h).get_json()
+    assert again["front"]["manual"] is True
+    bad = client.put("/api/corners?p=Maya%20Okafor&c=Halcyon", headers=client.h, json={"front": [[2, 2]]})
+    assert bad.status_code == 400

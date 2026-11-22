@@ -48,10 +48,10 @@ def test_scan_skips_deleted_and_hidden_folders(root):
 
 
 def test_name_comes_from_folder_without_card_json(root):
-    card = {c.id: c for c in scan(root)}["Elias Brandt"]
-    data = card.to_json()
-    assert card.name == "Elias Brandt" and data["has_details"] is False
-    assert (data["front_file"], data["back_file"]) == ("FRONT.JPG", "Back.png")
+    person = {p.id: p for p in scan(root)}["Elias Brandt"]
+    data = person.to_json()
+    assert person.name == "Elias Brandt" and data["has_details"] is False
+    assert (data["cards"][0]["front_file"], data["cards"][0]["back_file"]) == ("FRONT.JPG", "Back.png")
 
 
 def test_broken_card_json_still_shows_card_and_blocks_edit(root):
@@ -61,7 +61,7 @@ def test_broken_card_json_still_shows_card_and_blocks_edit(root):
     card = lib.get("Elias Brandt")
     assert card.details_error and card.name == "Elias Brandt"
     with pytest.raises(LibraryError):
-        lib.update("Elias Brandt", {"name": "X"}, {})
+        lib.update("Elias Brandt", "", {"name": "X"}, {})
     assert (root / "Elias Brandt" / "card.json").read_text(encoding="utf-8") == "{ not json"
 
 
@@ -71,7 +71,7 @@ def test_update_writes_pretty_json_and_keeps_unknown_keys(root):
     images_before = {p.name: p.read_bytes() for p in (root / "Maya Okafor").glob("*.jpg")}
     lib = Library(root)
     lib.rescan()
-    lib.update("Maya Okafor", {"name": "Maya O.", "role": "Architect", "tags": "a, b ,,c"}, {})
+    lib.update("Maya Okafor", "", {"name": "Maya O.", "role": "Architect", "tags": "a, b ,,c"}, {})
     text = cf.read_text(encoding="utf-8")
     data = json.loads(text)
     assert text.startswith('{\n  "name": "Maya O."')
@@ -97,14 +97,14 @@ def test_update_never_replaces_an_existing_image(root):
     lib = Library(root)
     lib.rescan()
     with pytest.raises(LibraryError, match="never replaces"):
-        lib.update("Maya Okafor", {"name": "Maya"}, {"back": ("new.jpg", b"data")})
+        lib.update("Maya Okafor", "", {"name": "Maya"}, {"back": ("new.jpg", b"data")})
 
 
 def test_update_can_add_a_missing_side(tmp_path):
     make_image(tmp_path / "R" / "Solo" / "front.jpg")
     lib = Library(tmp_path / "R")
     lib.rescan()
-    card = lib.update("Solo", {"name": "Solo"}, {"back": ("IMG.PNG", b"png-bytes")})
+    card = lib.update("Solo", "", {"name": "Solo"}, {"back": ("IMG.PNG", b"png-bytes")}).cards[0]
     assert card.back.name == "back.png" and card.back.read_bytes() == b"png-bytes"
 
 
@@ -166,3 +166,102 @@ def test_delete_moves_folder_into_deleted(root):
 )
 def test_safe_folder_name(name, expected):
     assert safe_folder_name(name) == expected
+
+
+# ---------- several cards for one person ----------
+
+
+@pytest.fixture
+def multi(root):
+    """Maya has her first card at the top, plus two card subfolders (one without card.json)."""
+    maya = root / "Maya Okafor"
+    make_image(maya / "Halcyon 2026" / "front.jpg")
+    make_image(maya / "Halcyon 2026" / "back.jpg")
+    (maya / "Halcyon 2026" / "card.json").write_text(
+        json.dumps({"company": "Halcyon Studio", "role": "Director", "email": "maya@halcyon.example.com"}),
+        encoding="utf-8",
+    )
+    make_image(maya / "Old card" / "scan.png", fmt="PNG")
+    (maya / "_scraps").mkdir()
+    make_image(maya / "_scraps" / "front.jpg")
+    (maya / "empty").mkdir()
+    return root
+
+
+def test_card_subfolders_are_cards_of_one_person(multi):
+    person = {p.id: p for p in scan(multi)}["Maya Okafor"]
+    assert [c.key for c in person.cards] == ["", "Halcyon 2026", "Old card"]
+    data = person.to_json()
+    halcyon, old = data["cards"][1], data["cards"][2]
+    assert halcyon["company"] == "Halcyon Studio" and halcyon["role"] == "Director"
+    assert old["company"] == "Northwind Networks"  # no card.json: uses the person's details
+    assert old["front_file"] == "scan.png" and old["has_back"] is False
+    assert data["tags"] == ["networking"]
+
+
+def test_person_with_only_card_subfolders_has_no_main_card(tmp_path):
+    make_image(tmp_path / "R" / "Ana Ruiz" / "2025" / "front.jpg")
+    person = scan(tmp_path / "R")[0]
+    assert [c.key for c in person.cards] == ["2025"]
+
+
+def test_editing_a_subfolder_card_splits_person_and_card_details(multi):
+    lib = Library(multi)
+    lib.rescan()
+    lib.update(
+        "Maya Okafor",
+        "Halcyon 2026",
+        {
+            "name": "Maya Okafor",
+            "tags": "design",
+            "notes": "Moved to Halcyon",
+            "company": "Halcyon",
+            "role": "CD",
+        },
+        {},
+    )
+    card = json.loads((multi / "Maya Okafor" / "Halcyon 2026" / "card.json").read_text(encoding="utf-8"))
+    person = json.loads((multi / "Maya Okafor" / "card.json").read_text(encoding="utf-8"))
+    assert card["company"] == "Halcyon" and card["role"] == "CD" and "notes" not in card
+    assert person["notes"] == "Moved to Halcyon" and person["tags"] == ["design"]
+    assert person["company"] == "Northwind Networks"  # the main card's company is untouched
+
+
+def test_add_card_makes_a_subfolder(multi):
+    lib = Library(multi)
+    lib.rescan()
+    person, key = lib.add_card(
+        "Maya Okafor", "", {"company": "Kestrel Labs", "met_date": "2027-03-01"}, {"front": ("a.HEIC", b"H")}
+    )
+    assert key == "Kestrel Labs 2027"
+    assert (multi / "Maya Okafor" / key / "front.heic").read_bytes() == b"H"
+    assert (
+        json.loads((multi / "Maya Okafor" / key / "card.json").read_text(encoding="utf-8"))["company"]
+        == "Kestrel Labs"
+    )
+    assert key in [c.key for c in person.cards]
+    _, again = lib.add_card("Maya Okafor", "Kestrel Labs 2027", {}, {})
+    assert again == "Kestrel Labs 2027 (2)"
+
+
+def test_delete_one_card_moves_only_its_subfolder(multi):
+    lib = Library(multi)
+    lib.rescan()
+    assert lib.delete("Maya Okafor", "Halcyon 2026") == "Maya Okafor - Halcyon 2026"
+    assert (multi / "_deleted" / "Maya Okafor - Halcyon 2026" / "front.jpg").exists()
+    assert (multi / "Maya Okafor" / "front.jpg").exists()
+    assert [c.key for c in lib.get("Maya Okafor").cards] == ["", "Old card"]
+
+
+def test_corners_are_saved_in_the_cards_own_card_json(multi):
+    lib = Library(multi)
+    lib.rescan()
+    pts = [[0.1, 0.1], [0.9, 0.1], [0.9, 0.9], [0.1, 0.9]]
+    lib.set_corners("Maya Okafor", "Old card", {"front": pts})
+    data = json.loads((multi / "Maya Okafor" / "Old card" / "card.json").read_text(encoding="utf-8"))
+    assert data == {"corners": {"front": pts}}
+    lib.set_corners("Maya Okafor", "", {"back": pts})
+    person = json.loads((multi / "Maya Okafor" / "card.json").read_text(encoding="utf-8"))
+    assert person["corners"] == {"back": pts} and person["company"] == "Northwind Networks"
+    lib.set_corners("Maya Okafor", "", {"back": None})
+    assert "corners" not in json.loads((multi / "Maya Okafor" / "card.json").read_text(encoding="utf-8"))

@@ -146,6 +146,33 @@ main{padding:24px 32px 64px;max-width:1600px;margin:0 auto}
 .files b{font-weight:400;color:var(--text2)}
 .files .none{opacity:.6}
 .pactions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.pactions + .pactions{margin-top:8px}
+.switch{display:flex;align-items:center;gap:8px;margin-top:20px;padding:8px;border-radius:8px;background:var(--raised)}
+.switch .btn.icon{width:28px;height:28px;border:0;background:transparent}
+.switch .btn.icon:hover{background:var(--panel)}
+.switch .mid{flex:1;min-width:0;text-align:center}
+.switch .fv{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta .n{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.meta .cnt{flex:none;font:12px/16px var(--mono);color:var(--muted)}
+.thumb.stack{overflow:visible}
+.thumb.stack::before{content:"";position:absolute;inset:0;border-radius:8px;background:var(--raised);box-shadow:0 0 0 1px var(--line);transform:translate(6px,-6px);z-index:-1}
+.thumb.stack img,.thumb.stack .shine{border-radius:8px}
+.btn.sm{height:28px;padding:0 10px;font-size:13px}
+.dialog.wide{width:min(1120px,100%)}
+.corn-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.corn-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.corn-head b{font-weight:500}
+.corn-head .mode{margin-right:auto;font:12px/16px var(--mono);color:var(--muted)}
+.corn-stage{display:grid;place-items:center;min-height:200px;background:var(--deep);border-radius:8px;padding:12px}
+.corn-box{position:relative;display:inline-block;max-width:100%;touch-action:none;user-select:none;-webkit-user-select:none}
+.corn-box img{display:block;max-width:100%;max-height:52vh;pointer-events:none}
+.corn-box svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.corn-box polygon{fill:rgba(201,169,110,.08);stroke:var(--gold);stroke-width:1.5;vector-effect:non-scaling-stroke}
+.corn-box line{stroke:var(--gold);stroke-width:4;vector-effect:non-scaling-stroke}
+.corn-box .h{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:var(--text);border:2px solid #161513;box-shadow:0 1px 4px rgba(0,0,0,.6);cursor:grab}
+.corn-box .h.tl{background:var(--gold)}
+.corn-box .h:active{cursor:grabbing}
+.corn-empty{color:var(--muted);font-size:13px;padding:48px 0}
 
 /* ---------- dialogs ---------- */
 .modal{position:fixed;inset:0;z-index:40;background:rgba(10,9,8,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;place-items:center;padding:24px}
@@ -177,6 +204,7 @@ main{padding:24px 32px 64px;max-width:1600px;margin:0 auto}
 .field-in{height:36px;padding:0 12px;background:var(--deep);border:1px solid var(--line);border-radius:8px;outline:none;color:var(--text);font-size:14px;transition:border-color .16s var(--ease)}
 textarea.field-in{height:auto;padding:8px 12px;resize:vertical;min-height:72px;line-height:20px}
 .field-in[type=date]{color-scheme:dark}
+.field-in:disabled{color:var(--text2);background:transparent;cursor:default}
 .dfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
 .dfoot .left{margin-right:auto}
 .setrow{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--line)}
@@ -200,7 +228,7 @@ textarea.field-in{height:auto;padding:8px 12px;resize:vertical;min-height:72px;l
   .viewer{grid-template-columns:1fr;grid-template-rows:60vh 1fr}
   .panel{border-left:0;border-top:1px solid var(--line)}
   .searchbox{width:100%;order:5}
-  .editor,.form{grid-template-columns:1fr}
+  .editor,.form,.corn-grid{grid-template-columns:1fr}
   .drops{grid-template-columns:1fr 1fr}
 }
 @media (prefers-reduced-motion:reduce){
@@ -287,6 +315,7 @@ textarea.field-in{height:auto;padding:8px 12px;resize:vertical;min-height:72px;l
       <button type="button" class="btn swap" id="swapBtn"><svg class="i"><use href="#i-swap"/></svg>Swap front and back</button>
     </div>
     <div class="form">
+      <label class="wide" id="labelRow" hidden>Card name<input class="field-in" name="label" data-meta="1"></label>
       <label>Name<input class="field-in" name="name"></label>
       <label>Company<input class="field-in" name="company"></label>
       <label>Role<input class="field-in" name="role"></label>
@@ -305,6 +334,16 @@ textarea.field-in{height:auto;padding:8px 12px;resize:vertical;min-height:72px;l
       <button type="submit" class="btn primary" id="saveE">Save card</button>
     </div>
   </form>
+</div>
+
+<!-- adjust corners -->
+<div class="modal" id="cornM">
+  <div class="dialog wide" role="dialog" aria-labelledby="cornT">
+    <h2 id="cornT">Adjust corners</h2>
+    <p class="sub">Drag the four corners onto the edges of the card in each photo. The gold corner and line mark the card’s top edge. Decklet saves the corners in card.json; your photos stay as they are.</p>
+    <div class="corn-grid" id="cornGrid"></div>
+    <div class="dfoot"><button class="btn" id="cornCancel">Cancel</button><button class="btn primary" id="cornSave">Save corners</button></div>
+  </div>
 </div>
 
 <!-- settings -->
@@ -365,10 +404,15 @@ window.addEventListener('error', e => reportError(`${e.message} at ${(e.filename
 window.addEventListener('unhandledrejection', e => reportError(`Unhandled promise rejection: ${e.reason?.stack || e.reason}`));
 
 const icon = id => `<svg class="i"><use href="#i-${id}"/></svg>`;
-const media = (kind, side, c) => `/media/${kind}/${side}/${encodeURIComponent(c.id)}?s=${stamp}`;
+// A person (p) has one or more physical cards (c). p.cover is the newest card, shown in the gallery.
+const media = (kind, side, p, c) => `/media/${kind}/${side}/${encodeURIComponent(p.id)}?c=${encodeURIComponent(c.key)}&s=${stamp}`;
+const ids = (p, c) => `?p=${encodeURIComponent(p.id)}${c ? `&c=${encodeURIComponent(c.key)}` : ''}`;
+const flat = (p, c) => ({ ...p, ...c, id:p.id, name:p.name, has_details: c.key ? c.has_details : p.has_details, details_error: p.details_error || c.details_error });
+const cardLabel = c => c.key || 'Main card';
+const plural = (n, w) => `${n} ${w}${n===1?'':'s'}`;
 
 /* ---------- state ---------- */
-let cards = [], view = [], cur = -1, state = {}, stamp = Date.now();
+let cards = [], view = [], cur = -1, ci = 0, state = {}, stamp = Date.now();
 try{ const s = localStorage.getItem('decklet.sort'); if(s) $('#sort').value = s; }catch(e){}
 
 async function loadState(){
@@ -383,7 +427,7 @@ async function loadCards(announce){
     const r = await api('/api/cards');
     cards = r.cards; state.root_ok = r.root_ok; stamp = Date.now();
     render();
-    if(announce) toast(`Found ${cards.length} card${cards.length===1?'':'s'}`);
+    if(announce) toast(`Found ${plural(cards.length,'person').replace('persons','people')}, ${plural(cards.reduce((n,p)=>n+p.cards.length,0),'card')}`);
   }catch(e){ toast(e.message); }
 }
 $('#rescanBtn').onclick = () => loadCards(true);
@@ -393,10 +437,13 @@ const grid = $('#grid');
 function render(){
   const q = $('#q').value.trim().toLowerCase();
   const sort = $('#sort').value;
-  view = cards.filter(c => !q || [c.name,c.company,c.role,c.email,c.phone,c.met_at,c.notes,(c.tags||[]).join(' ')].join(' ').toLowerCase().includes(q));
-  view.sort((a,b) => sort==='added' ? (b.added||0)-(a.added||0) : String(a[sort]||'').localeCompare(String(b[sort]||''), undefined, {sensitivity:'base'}));
-  const plural = n => `${n} card${n===1?'':'s'}`;
-  $('#count').textContent = !state.root_ok ? '' : view.length===cards.length ? plural(cards.length) : `${view.length} of ${plural(cards.length)}`;
+  const text = p => [p.name,p.met_at,p.notes,(p.tags||[]).join(' '),...p.cards.flatMap(c=>[c.key,c.company,c.role,c.email,c.phone])].join(' ').toLowerCase();
+  const key = (p, k) => k==='company' ? (p.cards[p.cover]?.company||'') : (p[k]||'');
+  view = cards.filter(p => !q || text(p).includes(q));
+  view.sort((a,b) => sort==='added' ? (b.added||0)-(a.added||0) : key(a,sort).localeCompare(key(b,sort), undefined, {sensitivity:'base'}));
+  const people = n => n===1 ? '1 person' : `${n} people`;
+  const total = cards.reduce((n,p)=>n+p.cards.length,0);
+  $('#count').textContent = !state.root_ok ? '' : view.length===cards.length ? `${people(cards.length)} · ${plural(total,'card')}` : `${view.length} of ${people(cards.length)}`;
   if(!state.root_ok){
     const missing = !!state.root;
     grid.innerHTML = `<div class="empty"><b>${missing ? 'The cards folder is missing' : 'Choose your cards folder'}</b>
@@ -405,12 +452,12 @@ function render(){
     $('#emptyChoose').onclick = chooseFolder;
     return;
   }
-  grid.innerHTML = view.length ? view.map((c,i) => `
-    <div class="tile" data-i="${i}" tabindex="0" role="button" aria-label="${esc(c.name)}">
-      <div class="thumb">${c.has_front ? `<img src="${media('thumb','front',c)}" alt="" loading="lazy">` : '<div class="noimg">No image</div>'}<div class="shine"></div></div>
-      <div class="meta"><div class="n">${esc(c.name||'Untitled')}</div><div class="c">${esc([c.role,c.company].filter(Boolean).join(' · '))}</div></div>
-    </div>`).join('')
-    : `<div class="empty"><b>${cards.length?'No matches':'No cards yet'}</b>${cards.length?'Try another search.':'Select “+ Add card”, or put one folder per person in the cards folder and select Rescan.'}</div>`;
+  grid.innerHTML = view.length ? view.map((p,i) => { const c = p.cards[p.cover]; const n = p.cards.length; return `
+    <div class="tile" data-i="${i}" tabindex="0" role="button" aria-label="${esc(p.name)}${n>1?`, ${n} cards`:''}">
+      <div class="thumb${n>1?' stack':''}">${c.has_front ? `<img src="${media('thumb','front',p,c)}" alt="" loading="lazy">` : '<div class="noimg">No image</div>'}<div class="shine"></div></div>
+      <div class="meta"><div class="n"><span>${esc(p.name||'Untitled')}</span>${n>1?`<span class="cnt">${n} cards</span>`:''}</div><div class="c">${esc([c.role,c.company].filter(Boolean).join(' · '))}</div></div>
+    </div>`; }).join('')
+    : `<div class="empty"><b>${cards.length?'No matches':'No cards yet'}</b>${cards.length?'Try another search.':'Select “Add card”, or put one folder per person in the cards folder and select Rescan.'}</div>`;
   grid.querySelectorAll('.tile').forEach(tile => {
     const th = tile.querySelector('.thumb');
     tile.addEventListener('mousemove', e => {
@@ -444,16 +491,22 @@ function setFace(el, src, label){
   el.querySelector('.lblm')?.remove();
   if(!src){ const d=document.createElement('div'); d.className='lblm'; d.textContent=label; el.appendChild(d); }
 }
-function openViewer(i, dir=0){
+// i = person in the gallery order, dir = swing direction, cardIndex = which of their cards (default: newest)
+function openViewer(i, dir=0, cardIndex=null){
   if(!view.length) return;
   cur = (i + view.length) % view.length;
-  const c = view[cur];
-  const fsrc = c.has_front ? media('full','front',c) : '', bsrc = c.has_back ? media('full','back',c) : '';
+  const p = view[cur];
+  ci = clamp(cardIndex ?? p.cover, 0, p.cards.length-1);
+  const c = p.cards[ci];
+  const fsrc = c.has_front ? media('full','front',p,c) : '', bsrc = c.has_back ? media('full','back',p,c) : '';
   setFace(faceF, fsrc, 'No front image'); setFace(faceB, bsrc, 'No back image');
-  renderPanel(c);
-  aspect = 1.75; sizeCard();
-  if (fsrc){ const im = new Image(); im.onload = () => { if(view[cur]===c){ aspect = im.naturalWidth/im.naturalHeight || 1.75; sizeCard(); } }; im.src = fsrc; }
-  rx = -14; ry = dir>0 ? 70 : dir<0 ? -70 : -45; vx = vy = 0; zoomT = 1;
+  renderPanel(p, c);
+  const src = fsrc || bsrc;
+  if (src){ const im = new Image(); im.onload = () => { if(view[cur]===p && p.cards[ci]===c){ aspect = im.naturalWidth/im.naturalHeight || 1.75; sizeCard(); } }; im.src = src; }
+  else { aspect = 1.75; sizeCard(); }
+  if(dir==='up' || dir==='down'){ rx = dir==='up' ? 60 : -60; ry = 0; }
+  else { rx = -14; ry = dir>0 ? 70 : dir<0 ? -70 : -45; }
+  vx = vy = 0; zoomT = 1;
   tween = { rx:-6, ry:14 };
   if(!isOpen){ isOpen = true; viewer.classList.add('open'); viewer.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; requestAnimationFrame(frame); }
 }
@@ -512,6 +565,7 @@ window.addEventListener('resize', () => { if(isOpen) sizeCard(); });
 $('#closeV').onclick = closeViewer;
 $('#prevV').onclick = () => openViewer(cur-1, -1);
 $('#nextV').onclick = () => openViewer(cur+1, 1);
+function switchCard(step){ const p = view[cur]; if(!p || p.cards.length<2) return false; openViewer(cur, step>0?'up':'down', (ci+step+p.cards.length)%p.cards.length); return true; }
 $('#flipBtn').onclick = flip;
 $('#frontBtn').onclick = () => { tween = snapFront(); };
 $('#backBtn').onclick  = () => { tween = snapBack(); };
@@ -527,33 +581,49 @@ function fieldHTML(k, v){
   if(k==='met_date'){ const d = new Date(v+'T00:00'); return isNaN(d) ? t : d.toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}); }
   return t;
 }
-function renderPanel(c){
+function renderPanel(p, c){
+  const f = flat(p, c), n = p.cards.length;
+  const files = [c.front_file, c.back_file, f.has_details ? 'card.json' : ''].filter(Boolean).map(esc).join(' · ') || '<span class="none">no images</span>';
   $('#panel').innerHTML = `
-    <div class="pname">${esc(c.name||'Untitled')}</div>
-    <div class="prole">${esc([c.role,c.company].filter(Boolean).join(' · '))}</div>
-    ${c.details_error ? `<div class="warn">${esc(c.details_error)}. Decklet shows the folder name and images only. Fix the file in a text editor, then select Rescan.</div>` : ''}
-    <div class="fields">${FIELDS.filter(([k])=>c[k]).map(([k,l]) => `
-      <div class="field"><div><div class="fl">${l}</div><div class="fv">${fieldHTML(k,c[k])}</div></div>
-      ${['email','phone','website','address'].includes(k)?`<button class="copy" data-copy="${esc(c[k])}" title="Copy ${l.toLowerCase()}" aria-label="Copy ${l.toLowerCase()}">${icon('copy')}</button>`:''}</div>`).join('')}</div>
-    ${(c.tags||[]).length ? `<div class="tags">${c.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
-    ${c.notes ? `<div class="notes">${esc(c.notes)}</div>` : ''}
-    <div class="files" title="The files behind this card"><b>${esc(c.id)} /</b><br>${[c.front_file, c.back_file, c.has_details ? 'card.json' : ''].filter(Boolean).map(esc).join(' · ') || '<span class="none">no images</span>'}</div>
+    <div class="pname">${esc(p.name||'Untitled')}</div>
+    <div class="prole">${esc([f.role,f.company].filter(Boolean).join(' · '))}</div>
+    ${n>1 ? `<div class="switch">
+      <button class="btn icon" id="cPrev" title="Previous card (↑)" aria-label="Previous card">${icon('left')}</button>
+      <div class="mid"><div class="fl">Card ${ci+1} of ${n}</div><div class="fv">${esc(cardLabel(c))}</div></div>
+      <button class="btn icon" id="cNext" title="Next card (↓)" aria-label="Next card">${icon('right')}</button></div>` : ''}
+    ${f.details_error ? `<div class="warn">${esc(f.details_error)}. Decklet shows the folder name and images only. Fix the file in a text editor, then select Rescan.</div>` : ''}
+    <div class="fields">${FIELDS.filter(([k])=>f[k]).map(([k,l]) => `
+      <div class="field"><div><div class="fl">${l}</div><div class="fv">${fieldHTML(k,f[k])}</div></div>
+      ${['email','phone','website','address'].includes(k)?`<button class="copy" data-copy="${esc(f[k])}" title="Copy ${l.toLowerCase()}" aria-label="Copy ${l.toLowerCase()}">${icon('copy')}</button>`:''}</div>`).join('')}</div>
+    ${(p.tags||[]).length ? `<div class="tags">${p.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+    ${p.notes ? `<div class="notes">${esc(p.notes)}</div>` : ''}
+    <div class="files" title="The files behind this card"><b>${esc(p.id)} /${c.key ? ` ${esc(c.key)} /` : ''}</b><br>${files}</div>
     <div class="pactions">
       <button class="btn" id="vcardBtn">Copy vCard</button>
-      <button class="btn" id="editBtn" ${c.details_error?'disabled':''}>Edit</button>
+      <button class="btn" id="editBtn" ${f.details_error?'disabled':''}>Edit</button>
+      <button class="btn" id="cornBtn" ${!(c.has_front||c.has_back)||c.details_error?'disabled':''} title="Line up the card edges in the photos">Adjust corners</button>
+    </div>
+    <div class="pactions">
+      <button class="btn" id="moreBtn" ${p.details_error?'disabled':''} title="Add another card for ${esc(p.name)}">${icon('plus')}Add card for ${esc(p.name.split(' ')[0])}</button>
       <button class="btn danger" id="delBtn" title="Moves the folder to _deleted in the cards folder">Delete</button>
     </div>`;
-  $('#editBtn').onclick = () => openEditor(c);
-  $('#vcardBtn').onclick = () => copyText(toVCard(c), 'vCard copied');
+  $('#cPrev')?.addEventListener('click', () => switchCard(-1));
+  $('#cNext')?.addEventListener('click', () => switchCard(1));
+  $('#editBtn').onclick = () => openEditor('edit', p, c);
+  $('#moreBtn').onclick = () => openEditor('add-card', p, null);
+  $('#cornBtn').onclick = () => openCorners(p, c);
+  $('#vcardBtn').onclick = () => copyText(toVCard(f), 'vCard copied');
   const del = $('#delBtn');
+  const what = c.key ? `“${c.key}”` : n>1 ? `${p.name} and all ${n} cards` : `“${p.id}”`;
   del.onclick = async () => {
-    if(!del.classList.contains('armed')){ del.classList.add('armed'); del.textContent='Move to _deleted?'; setTimeout(()=>{ del.classList.remove('armed'); del.textContent='Delete'; },3000); return; }
+    if(!del.classList.contains('armed')){ del.classList.add('armed'); del.textContent=`Move ${what} to _deleted?`; setTimeout(()=>{ del.classList.remove('armed'); del.textContent='Delete'; },3000); return; }
     del.disabled = true;
     try{
-      await api('/api/cards/'+encodeURIComponent(c.id), { method:'DELETE' });
-      toast(`Moved “${c.id}” to _deleted`);
-      cards = cards.filter(x => x.id !== c.id); render();
-      view.length ? openViewer(Math.min(cur, view.length-1)) : closeViewer();
+      await api('/api/card'+ids(p, c.key ? c : null), { method:'DELETE' });
+      toast(`Moved ${what} to _deleted`);
+      await loadCards();
+      const i = view.findIndex(x => x.id===p.id);
+      if(i>=0) openViewer(i, 0, 0); else view.length ? openViewer(Math.min(cur, view.length-1)) : closeViewer();
     }catch(e){ toast(e.message); del.disabled = false; }
   };
 }
@@ -576,7 +646,7 @@ function toVCard(c){
 
 /* ---------- add / edit ---------- */
 // draft[side] = { file, url } for a newly chosen image, { existing:url } for one already in the folder, or null.
-let editing = null, draft = { front:null, back:null };
+let editing = null, draft = { front:null, back:null };  // editing = { mode: 'add' | 'add-card' | 'edit', p, c }
 const editM=$('#editM'), editF=$('#editF'), dropF=$('#dropF'), dropB=$('#dropB');
 const dropOf = side => side==='front' ? dropF : dropB;
 function showDrops(){
@@ -592,21 +662,31 @@ function showDrops(){
   }
 }
 function clearDraft(){ for(const s of ['front','back']) if(draft[s]?.url) URL.revokeObjectURL(draft[s].url); draft = { front:null, back:null }; }
-function openEditor(c){
-  editing = c || null;
-  $('#editT').textContent = c ? 'Edit card' : 'Add card';
-  $('#editSub').textContent = c
-    ? 'Changes are saved to card.json in the card’s folder. Existing images stay as they are.'
-    : 'Drop the front and back photos (or drop both on Front at once). Decklet makes a new folder and copies the photos in.';
-  $('#swapBtn').hidden = !!c;
+function openEditor(mode, p=null, c=null){
+  editing = { mode, p, c };
+  const T = { 'add':'Add card', 'add-card':`Add card for ${p?.name||''}`, 'edit':'Edit card' }[mode];
+  $('#editT').textContent = T;
+  $('#editSub').textContent = {
+    'add': 'Drop the front and back photos (or drop both on Front at once). Decklet makes a folder for the person and copies the photos in.',
+    'add-card': `Decklet makes a new card folder inside “${p?.id}” and copies the photos in. Name, tags and notes are shared by all of ${p?.name}’s cards.`,
+    'edit': 'Changes are saved to card.json. Name, tags, notes and where you met are shared by all of this person’s cards. Existing images stay as they are.',
+  }[mode];
+  $('#swapBtn').hidden = mode==='edit';
+  $('#labelRow').hidden = mode!=='add-card';
   editF.reset(); clearDraft();
-  if(c){
-    draft.front = c.has_front ? { existing: media('thumb','front',c) } : null;
-    draft.back  = c.has_back  ? { existing: media('thumb','back',c) }  : null;
-    for(const el of editF.elements){ if(el.name) el.value = el.name==='tags' ? (c.tags||[]).join(', ') : (c[el.name] || ''); }
+  const nameIn = editF.elements.name;
+  nameIn.disabled = mode==='add-card';
+  if(p){
+    const f = mode==='edit' ? flat(p, c) : { ...p, company:'', role:'', email:'', phone:'', website:'', address:'' };
+    for(const el of editF.elements){ if(el.name && !el.dataset.meta) el.value = el.name==='tags' ? (f.tags||[]).join(', ') : (f[el.name] || ''); }
+  }
+  if(mode==='add-card') editF.elements.label.placeholder = `For example: Company ${new Date().getFullYear()}`;
+  if(mode==='edit'){
+    draft.front = c.has_front ? { existing: media('thumb','front',p,c) } : null;
+    draft.back  = c.has_back  ? { existing: media('thumb','back',p,c) }  : null;
   }
   showDrops();
-  editM.classList.add('open'); setTimeout(()=>editF.elements.name.focus(), 50);
+  editM.classList.add('open'); setTimeout(()=>(mode==='add-card' ? editF.elements.label : nameIn).focus(), 50);
 }
 const closeEditor = () => { editM.classList.remove('open'); clearDraft(); };
 const isImage = f => IMAGE_EXTS.some(x => f.name.toLowerCase().endsWith(x));
@@ -637,27 +717,86 @@ $('#cancelE').onclick = closeEditor;
 editF.addEventListener('submit', async e => {
   e.preventDefault();
   const data = {};
-  for(const el of editF.elements) if(el.name) data[el.name] = el.value.trim();
+  for(const el of editF.elements) if(el.name && !el.dataset.meta) data[el.name] = el.value.trim();
   data.tags = data.tags ? data.tags.split(',').map(s=>s.trim()).filter(Boolean) : [];
-  if(!editing && !data.name) return toast('Enter a name. It is used as the folder name.');
+  const { mode, p, c } = editing;
+  if(mode==='add' && !data.name) return toast('Enter a name. It is used as the folder name.');
   const fd = new FormData();
   fd.append('details', JSON.stringify(data));
+  if(mode==='add-card') fd.append('label', editF.elements.label.value.trim());
   for(const side of ['front','back']) if(draft[side]?.file) fd.append(side, draft[side].file, draft[side].file.name);
   const btn = $('#saveE'); btn.disabled = true;
   try{
-    const r = editing
-      ? await api('/api/cards/'+encodeURIComponent(editing.id), { method:'PUT', body: fd })
+    const r = mode==='edit' ? await api('/api/card'+ids(p, c), { method:'PUT', body: fd })
+      : mode==='add-card' ? await api('/api/card'+ids(p), { method:'POST', body: fd })
       : await api('/api/cards', { method:'POST', body: fd });
-    const wasEditing = !!editing;
     closeEditor();
-    toast(wasEditing ? 'Card saved' : `Card added as “${r.card.id}”`);
+    toast(mode==='edit' ? 'Card saved' : mode==='add-card' ? `Card added as “${r.card.id} / ${r.key}”` : `Card added as “${r.card.id}”`);
     await loadCards();
-    const i = view.findIndex(c => c.id===r.card.id);
-    if(i>=0 && (isOpen || !wasEditing)) openViewer(i);
+    const i = view.findIndex(x => x.id===r.card.id);
+    if(i>=0) openViewer(i, 0, Math.max(0, view[i].cards.findIndex(x => x.key===r.key)));
   }catch(err){ toast(err.message); }
   finally{ btn.disabled = false; }
 });
-$('#addBtn').onclick = () => { if(!state.root_ok) return chooseFolder(); openEditor(null); };
+$('#addBtn').onclick = () => { if(!state.root_ok) return chooseFolder(); openEditor('add'); };
+
+/* ---------- adjust corners ---------- */
+const cornM = $('#cornM');
+let corn = null;  // { p, c, sides: { front: { corners, manual, auto }, back: ... } }
+async function openCorners(p, c){
+  try{ corn = { p, c, sides: await api('/api/corners'+ids(p, c)) }; }catch(e){ return toast(e.message); }
+  $('#cornT').textContent = `Adjust corners · ${p.name}${c.key ? ` · ${c.key}` : ''}`;
+  $('#cornGrid').innerHTML = ['front','back'].map(side => `
+    <div class="corn" data-side="${side}">
+      <div class="corn-head"><b>${side==='front'?'Front':'Back'}</b><span class="mode"></span>
+        ${corn.sides[side] ? `<button class="btn sm" data-act="auto">Automatic</button><button class="btn sm" data-act="rotate" title="Turn the card 90°">Rotate</button>` : ''}</div>
+      <div class="corn-stage">${corn.sides[side] ? `<div class="corn-box"><img src="${media('original', side, p, c)}" alt="${side} photo">
+        <svg viewBox="0 0 1 1" preserveAspectRatio="none"><polygon/><line/></svg>
+        ${[0,1,2,3].map(i=>`<div class="h${i===0?' tl':''}" data-i="${i}" role="slider" aria-label="${['Top-left','Top-right','Bottom-right','Bottom-left'][i]} corner"></div>`).join('')}</div>`
+        : '<div class="corn-empty">No photo</div>'}</div>
+    </div>`).join('');
+  for(const side of ['front','back']) if(corn.sides[side]) drawCorners(side);
+  cornM.classList.add('open');
+}
+function drawCorners(side){
+  const pane = $(`.corn[data-side="${side}"]`), st = corn.sides[side], pts = st.corners;
+  pane.querySelector('.mode').textContent = st.manual ? 'adjusted' : 'automatic';
+  pane.querySelector('polygon').setAttribute('points', pts.map(p=>p.join(',')).join(' '));
+  const ln = pane.querySelector('line');
+  ln.setAttribute('x1', pts[0][0]); ln.setAttribute('y1', pts[0][1]); ln.setAttribute('x2', pts[1][0]); ln.setAttribute('y2', pts[1][1]);
+  pane.querySelectorAll('.h').forEach(h => { const [x,y] = pts[+h.dataset.i]; h.style.left = x*100+'%'; h.style.top = y*100+'%'; });
+}
+$('#cornGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  const side = b.closest('.corn').dataset.side, st = corn.sides[side];
+  if(b.dataset.act==='auto'){ st.corners = st.auto.map(p=>[...p]); st.manual = false; }
+  else { st.corners = [...st.corners.slice(1), st.corners[0]]; st.manual = true; }
+  drawCorners(side);
+});
+$('#cornGrid').addEventListener('pointerdown', e => {
+  const h = e.target.closest('.h'); if(!h) return;
+  e.preventDefault(); h.setPointerCapture(e.pointerId);
+  const side = h.closest('.corn').dataset.side, box = h.closest('.corn-box'), i = +h.dataset.i;
+  const move = ev => {
+    const r = box.getBoundingClientRect();
+    corn.sides[side].corners[i] = [clamp((ev.clientX-r.left)/r.width,0,1), clamp((ev.clientY-r.top)/r.height,0,1)].map(v=>+v.toFixed(5));
+    corn.sides[side].manual = true; drawCorners(side);
+  };
+  const up = () => { h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); };
+  h.addEventListener('pointermove', move); h.addEventListener('pointerup', up);
+});
+$('#cornCancel').onclick = () => cornM.classList.remove('open');
+$('#cornSave').onclick = async () => {
+  const body = {};
+  for(const side of ['front','back']) if(corn.sides[side]) body[side] = corn.sides[side].manual ? corn.sides[side].corners : null;
+  try{
+    const r = await api('/api/corners'+ids(corn.p, corn.c), { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    cornM.classList.remove('open'); toast('Corners saved');
+    await loadCards();
+    const i = view.findIndex(x => x.id===r.card.id);
+    if(i>=0) openViewer(i, 0, Math.max(0, view[i].cards.findIndex(x => x.key===r.key)));
+  }catch(e){ toast(e.message); }
+};
 
 /* ---------- settings ---------- */
 const setM = $('#setM');
@@ -712,7 +851,7 @@ verBtn.onclick = async () => {
   }
 };
 
-[editM, setM, msgM].forEach(m => m.addEventListener('mousedown', e => { if(e.target===m){ m===editM ? closeEditor() : m.classList.remove('open'); } }));
+[editM, setM, msgM, cornM].forEach(m => m.addEventListener('mousedown', e => { if(e.target===m){ m===editM ? closeEditor() : m.classList.remove('open'); } }));
 
 /* ---------- keyboard ---------- */
 document.addEventListener('keydown', e => {
@@ -720,19 +859,20 @@ document.addEventListener('keydown', e => {
   if(e.key==='Escape'){
     if(isOpenM(msgM)) return msgM.classList.remove('open');
     if(isOpenM(editM)) return closeEditor();
+    if(isOpenM(cornM)) return cornM.classList.remove('open');
     if(isOpenM(setM)) return setM.classList.remove('open');
     if(isOpen) return closeViewer();
   }
   if(typing) return;
   if(e.key==='/' && !isOpen){ e.preventDefault(); $('#q').focus(); return; }
-  if(!isOpen || isOpenM(editM) || isOpenM(setM) || isOpenM(msgM)) return;
+  if(!isOpen || isOpenM(editM) || isOpenM(setM) || isOpenM(msgM) || isOpenM(cornM)) return;
   const k = e.key.toLowerCase();
   if(k==='f') flip();
   else if(k==='r') reset();
   else if(e.key==='ArrowRight') openViewer(cur+1, 1);
   else if(e.key==='ArrowLeft') openViewer(cur-1, -1);
-  else if(e.key==='ArrowUp'){ e.preventDefault(); vx -= 3; }
-  else if(e.key==='ArrowDown'){ e.preventDefault(); vx += 3; }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); if(!switchCard(-1)) vx -= 3; }
+  else if(e.key==='ArrowDown'){ e.preventDefault(); if(!switchCard(1)) vx += 3; }
 });
 
 loadState().then(() => loadCards()).catch(e => toast(e.message));
