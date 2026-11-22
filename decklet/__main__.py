@@ -74,10 +74,21 @@ def main() -> None:
             gui=gui,
             private_mode=False,
             storage_path=str(data_dir / "webview"),
-            icon=str(paths.resource_dir() / "icon.png"),
+            icon=window_icon(),
         )
     finally:
         app_log.end_session()
+
+
+def window_icon(system: str | None = None) -> str | None:
+    """The PNG window icon for Linux. Windows takes the icon from the .exe and macOS from the .app.
+
+    On Windows, pywebview loads this file with .NET's Icon(), which accepts only .ico files. A PNG makes it
+    fail before the window is shown, so the app quits with no window.
+    """
+    if (system or platform.system()) == "Windows":
+        return None
+    return str(paths.resource_dir() / "icon.png")
 
 
 def _fatal(message: str) -> None:
