@@ -1,0 +1,272 @@
+<!doctype html>
+<!-- Decklet product page: one page served by GitHub Pages from docs/, with live previews of the app. -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decklet: your business cards, in 3D</title>
+<meta name="description" content="Keep your paper business cards as photos and turn them over in 3D, like holding the real card. Free for Windows, macOS and Linux. Works offline. Sends no data.">
+<meta name="theme-color" content="#161513">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/cormorant-garamond-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Decklet">
+<meta property="og:title" content="Decklet: your business cards, in 3D">
+<meta property="og:description" content="Keep your paper business cards as photos and turn them over in 3D. Free, offline, no tracking.">
+<meta property="og:url" content="https://tariqmk.github.io/Decklet/">
+<meta property="og:image" content="https://tariqmk.github.io/Decklet/social-card.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="Decklet. Your business cards, in 3D.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Decklet: your business cards, in 3D">
+<meta name="twitter:description" content="Keep your paper business cards as photos and turn them over in 3D. Free, offline, no tracking.">
+<meta name="twitter:image" content="https://tariqmk.github.io/Decklet/social-card.png">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="#top" aria-label="Decklet, back to top"><img src="icon.svg" alt="" width="28" height="28"><span>Decklet</span></a>
+    <nav class="links" aria-label="Sections">
+      <a href="#features">Features</a>
+      <a href="#download">Download</a>
+      <a href="https://github.com/TariqMK/Decklet">GitHub</a>
+    </nav>
+    <a class="btn primary sm" href="#download">Download</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ Hero ============ -->
+  <section class="hero">
+    <svg class="motif" viewBox="0 0 1200 700" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+      <rect x="250" y="120" width="700" height="400" rx="28" transform="rotate(-8 600 320)"/>
+      <rect x="290" y="170" width="700" height="400" rx="28" transform="rotate(4 640 370)"/>
+    </svg>
+    <div class="wrap hero-copy">
+      <h1>Your business cards,<br>in 3D.</h1>
+      <p class="lede">Keep your paper business cards as photos and turn them over in 3D, like holding the real card. Every card stays in a folder on your computer.</p>
+      <div class="cta">
+        <a class="btn primary" id="hero-download" href="https://github.com/TariqMK/Decklet/releases/latest">Download Decklet</a>
+        <a class="btn ghost" href="https://github.com/TariqMK/Decklet">View source</a>
+      </div>
+      <p class="meta" id="hero-meta">Free · Offline · No tracking · Windows, macOS, Linux</p>
+    </div>
+
+    <!-- Live preview: the app's 3D viewer and info panel -->
+    <div class="wrap">
+      <div class="window" aria-label="Preview of the Decklet 3D viewer. Drag the card to turn it over.">
+        <div class="titlebar"><span class="tb-name">Decklet</span></div>
+        <div class="viewer">
+          <div class="stage" id="stage">
+            <div class="hud-top">
+              <span class="ibtn" aria-hidden="true"><svg class="i"><use href="#i-x"/></svg></span>
+              <span class="ibtn" aria-hidden="true"><svg class="i"><use href="#i-left"/></svg></span>
+              <span class="ibtn" aria-hidden="true"><svg class="i"><use href="#i-right"/></svg></span>
+              <div class="side">Showing <b id="side-lbl">front</b></div>
+            </div>
+            <div class="floor" id="floor"></div>
+            <div class="card3d" id="card3d">
+              <div class="edge t"></div><div class="edge b"></div><div class="edge l"></div><div class="edge r"></div>
+              <div class="face front" id="hero-front"><div class="glare" id="glare-f"></div></div>
+              <div class="face back" id="hero-back"><div class="glare" id="glare-b"></div></div>
+            </div>
+            <div class="hint" id="hint"><span>Drag to rotate</span><span class="hide-sm">Double-click to flip</span><span><span class="kbd">F</span>Flip</span><span><span class="kbd">R</span>Reset</span></div>
+            <div class="hud">
+              <button class="hbtn" data-act="front">Front</button>
+              <button class="hbtn" data-act="flip" title="F">Flip</button>
+              <button class="hbtn" data-act="back">Back</button>
+              <span class="sep"></span>
+              <button class="hbtn" data-act="spin" aria-pressed="false">Auto-spin</button>
+              <button class="hbtn" data-act="reset" title="R">Reset</button>
+            </div>
+          </div>
+          <aside class="panel" aria-label="Card details">
+            <div class="pname">Sam Hollis</div>
+            <div class="prole">Printer · Hollis Letterpress</div>
+            <div class="fields">
+              <div class="field"><div><div class="fl">Email</div><div class="fv">sam@hollispress.example</div></div><span class="copy" aria-hidden="true"><svg class="i"><use href="#i-copy"/></svg></span></div>
+              <div class="field"><div><div class="fl">Phone</div><div class="fv">+44 113 496 0915</div></div><span class="copy" aria-hidden="true"><svg class="i"><use href="#i-copy"/></svg></span></div>
+              <div class="field"><div><div class="fl">Website</div><div class="fv">hollispress.example</div></div><span class="copy" aria-hidden="true"><svg class="i"><use href="#i-copy"/></svg></span></div>
+              <div class="field"><div><div class="fl">Met at</div><div class="fv">Leeds Print Fair</div></div><span class="copy" aria-hidden="true"><svg class="i"><use href="#i-copy"/></svg></span></div>
+            </div>
+            <div class="tags"><span class="tag">print</span><span class="tag">suppliers</span></div>
+            <div class="notes">Quoted for 500 cards on cotton stock.</div>
+            <div class="files"><b>Sam Hollis /</b><br>front.jpg · back.jpg · card.json</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Principles ============ -->
+  <section class="principles wrap" aria-label="Principles">
+    <div class="pr">
+      <h2>Stays on your computer.</h2>
+      <p>Works offline. No accounts, no tracking, nothing sent anywhere. It only goes online when you select the version number to check for updates.</p>
+    </div>
+    <div class="pr">
+      <h2>Your photos stay untouched.</h2>
+      <p>Decklet never moves, renames or changes your photos. Delete moves a folder into <code>_deleted</code>, so nothing is removed for good.</p>
+    </div>
+    <div class="pr">
+      <h2>Just a folder of photos.</h2>
+      <p>Each person is a folder with a front and a back photo. Open it in any file browser, back it up, or take it to another computer.</p>
+    </div>
+  </section>
+
+  <!-- ============ Features ============ -->
+  <section class="features wrap" id="features">
+    <h2 class="sh">Every card you've kept,<br>where you can find it.</h2>
+
+    <!-- Corners: full width -->
+    <article class="fpanel full">
+      <div class="ftext">
+        <h3>Front and back always line up.</h3>
+        <p>Decklet finds the edges of the card in each photo, straightens it and crops away the table. Both sides come out the same size, even when the photos were taken differently. Missed an edge? Drag the corners into place.</p>
+        <p class="path">Tomás Rivera / front.jpg · back.jpg</p>
+      </div>
+      <div class="corners" id="corners">
+        <div class="cbox">
+          <div class="chead"><b>Front</b><span class="mode" data-mode>Automatic</span></div>
+          <div class="photo" data-photo="front"></div>
+        </div>
+        <div class="cbox">
+          <div class="chead"><b>Back</b><span class="mode" data-mode>Automatic</span></div>
+          <div class="photo" data-photo="back"></div>
+        </div>
+        <div class="cbox result">
+          <div class="chead"><b>In Decklet</b><span class="mode" id="result-side">front</span></div>
+          <div class="rstage"><div class="rcard" id="rcard"><div class="face front" id="r-front"></div><div class="face back" id="r-back"></div></div></div>
+        </div>
+      </div>
+    </article>
+
+    <div class="fpair">
+      <!-- Gallery with search -->
+      <article class="fpanel">
+        <div class="ftext">
+          <h3>Find anyone in a second.</h3>
+          <p>Every person shows as a photo of their card. Search by name, company, tag or notes. Try it.</p>
+        </div>
+        <div class="gallery">
+          <div class="gbar">
+            <label class="searchbox"><svg class="i"><use href="#i-search"/></svg><input id="gsearch" type="search" placeholder="Search" aria-label="Search the sample cards" autocomplete="off" spellcheck="false"><span class="kbd">/</span></label>
+            <span class="gcount" id="gcount">9 people · 10 cards</span>
+          </div>
+          <div class="ggrid" id="ggrid"></div>
+        </div>
+      </article>
+
+      <!-- Several cards per person -->
+      <article class="fpanel">
+        <div class="ftext">
+          <h3>Every card someone gave you.</h3>
+          <p>Changed jobs? Add their new card to the same person. Name, tags and notes stay shared. Each card keeps its own details.</p>
+        </div>
+        <div class="multi" id="multi">
+          <div class="mtile">
+            <div class="thumb stack" id="mthumb"></div>
+            <div class="mmeta"><span class="n">Maya Okafor</span><span class="cnt">2 cards</span></div>
+          </div>
+          <div class="mpanel">
+            <div class="switch">
+              <button class="sbtn" data-dir="-1" aria-label="Previous card"><svg class="i"><use href="#i-up"/></svg></button>
+              <div class="mid"><div class="fl" id="m-of">Card 2 of 2</div><div class="fv" id="m-co">Fernhill Landscape Studio</div></div>
+              <button class="sbtn" data-dir="1" aria-label="Next card"><svg class="i"><use href="#i-down"/></svg></button>
+            </div>
+            <div class="mrow"><span class="fl">Role</span><span class="fv" id="m-role">Landscape architect</span></div>
+            <div class="mrow"><span class="fl">Email</span><span class="fv" id="m-email">maya@fernhill.example</span></div>
+            <div class="mrow shared"><span class="fl">Tags</span><span class="fv">design · landscape</span></div>
+            <p class="path" id="m-path">Maya Okafor / Fernhill Landscape Studio /</p>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Every other feature -->
+    <div class="fgrid">
+      <div class="fcell"><h4>Copy in one click</h4><p>Copy any email, phone number or address, or the whole card as a vCard for your contacts app.</p></div>
+      <div class="fcell"><h4>Add a card in seconds</h4><p>Drop the front and back photos, type the name and select Save card. Your original photos stay where they are.</p></div>
+      <div class="fcell"><h4>Photos from your phone</h4><p>Use <code>.jpg</code>, <code>.png</code>, <code>.webp</code> or <code>.heic</code> photos, straight from the camera.</p></div>
+      <div class="fcell"><h4>Keyboard first</h4><p><span class="kbd">F</span> flips, <span class="kbd">R</span> resets, <span class="kbd">←</span> <span class="kbd">→</span> move between people and <span class="kbd">/</span> searches.</p></div>
+      <div class="fcell"><h4>Where you met</h4><p>Keep where and when you met, tags and notes with each person. Search finds them all.</p></div>
+      <div class="fcell"><h4>Moves with you</h4><p>Copy the app and its <code>Decklet-data</code> folder to another computer, and everything comes too.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ Download ============ -->
+  <section class="download wrap" id="download">
+    <h2 class="sh">Download Decklet</h2>
+    <p class="dl-version" id="dl-version">Free · GPL-3.0 · Latest release on GitHub</p>
+    <div class="platforms">
+      <div class="platform" data-os="windows">
+        <div class="ph"><h3>Windows</h3><span class="size">.exe</span></div>
+        <p>Windows 10 or later, 64-bit. One file: put it in a folder of its own and open it.</p>
+        <a class="btn get" href="https://github.com/TariqMK/Decklet/releases/latest">Download for Windows</a>
+      </div>
+      <div class="platform" data-os="macos">
+        <div class="ph"><h3>macOS</h3><span class="size">.zip</span></div>
+        <p>macOS 13 or later on Apple Silicon (M1 or newer). Open the zip to get Decklet.app.</p>
+        <a class="btn get" href="https://github.com/TariqMK/Decklet/releases/latest">Download for macOS</a>
+        <details class="mac-help">
+          <summary>First time opening it? Here's how</summary>
+          <p>Decklet isn't notarised by Apple yet, so macOS shows a warning the first time. This is expected.</p>
+          <ol>
+            <li>Open Decklet and click <b>Done</b> on the warning.</li>
+            <li>Open <b>System Settings → Privacy &amp; Security</b>, scroll down to the message saying “Decklet” was blocked, and click <b>Open Anyway</b>.</li>
+            <li>Enter your password, then click <b>Open</b>. You only need to do this once.</li>
+          </ol>
+        </details>
+      </div>
+      <div class="platform" data-os="linux">
+        <div class="ph"><h3>Linux</h3><span class="size">.tar.gz</span></div>
+        <p>64-bit Linux. Extract the file to get Decklet, then open it.</p>
+        <a class="btn get" href="https://github.com/TariqMK/Decklet/releases/latest">Download for Linux</a>
+      </div>
+    </div>
+    <p class="fine">Decklet makes a <code>Decklet-data</code> folder next to the app the first time it starts. Want to build it yourself? See the <a href="https://github.com/TariqMK/Decklet#for-developers">developer notes</a>.</p>
+  </section>
+
+  <!-- ============ Feedback ============ -->
+  <section class="feedback wrap">
+    <p>Found a problem, or have an idea for Decklet?</p>
+    <div class="fb-links">
+      <a href="https://github.com/TariqMK/Decklet/issues/new?template=bug.yml">Report a bug</a>
+      <a href="https://github.com/TariqMK/Decklet/issues/new?template=idea.yml">Suggest an idea</a>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <a class="logo" href="#top" aria-label="Decklet, back to top"><img src="icon.svg" alt="" width="24" height="24"><span>Decklet</span></a>
+    <p>Decklet reads your cards folder and never changes your photos. Free software under the GPL-3.0.</p>
+    <nav class="foot-links" aria-label="Project links">
+      <a href="https://github.com/TariqMK/Decklet">GitHub</a>
+      <a href="https://github.com/TariqMK/Decklet/releases">Releases</a>
+      <a href="https://github.com/TariqMK/Decklet/issues">Issues</a>
+    </nav>
+  </div>
+</footer>
+
+<!-- Line icons (lucide, ISC licence), the same set the app uses -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+</svg>
+
+<script src="app.js" defer></script>
+</body>
+</html>
