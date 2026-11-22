@@ -55,7 +55,7 @@ Decklet never moves, renames or changes your photos. Straightened copies for the
 
 Decklet runs on Windows 10 or later, macOS 13 or later on Apple Silicon (M1 or newer), and Linux.
 
-1. Go to the [Releases page](https://github.com/TariqMK/Decklet/releases/latest).
+1. Go to the [Releases page](https://github.com/TariqMK/Decklet/releases/latest) or the [Decklet website](https://tariqmk.github.io/Decklet/).
 2. Download the file for your computer:
    - Windows: `Decklet-vX.Y.Z-windows-x64.exe`
    - macOS: `Decklet-vX.Y.Z-macos-arm64.zip`. Open the zip to get `Decklet.app`.
@@ -260,6 +260,7 @@ flowchart LR
 | `assets/icon/` | The icon masters (`decklet.svg`, and `decklet-small.svg` for 16 to 32 px) and the built `.png`, `.ico` and `.icns` |
 | `assets/make_assets.py` | Builds the icon files, `decklet/icon.png`, `assets/banner.png`, `assets/social-card.png` and `assets/brand-board.png` |
 | `assets/make_screenshots.py` | Retakes the README screenshots and the 3D GIF with made-up sample cards |
+| `docs/` | The product website on GitHub Pages. It copies the icon, social card and fonts. Copy them in again after `make_assets.py` runs |
 
 </details>
 
