@@ -80,15 +80,15 @@ jobs:
         include:
           - os: windows-latest
             target: windows-x64
-            icon: assets/icon.ico
+            icon: assets/icon/decklet.ico
             mode: --onefile
           - os: macos-latest
             target: macos-arm64
-            icon: assets/icon.icns
+            icon: assets/icon/decklet.icns
             mode: --onedir
           - os: ubuntu-24.04
             target: linux-x64
-            icon: assets/icon.png
+            icon: assets/icon/decklet.png
             mode: --onefile
     runs-on: ${{ matrix.os }}
     env:

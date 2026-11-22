@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+<!-- Decklet icon master (48 px and up): a gold card back behind a cream front card with its corner turned. Rendered by assets/make_assets.py. -->
+<rect x="100" y="100" width="824" height="824" rx="185" fill="#1c1a18"/>
+<rect x="102" y="102" width="820" height="820" rx="183" fill="none" stroke="#efe9de" stroke-opacity="0.10" stroke-width="4"/>
+<g transform="translate(4 9)">
+<rect x="232" y="318" width="500" height="286" rx="20" fill="#C9A96E" transform="rotate(-8 482 461)"/>
+<g transform="rotate(4 542 561)">
+<path d="M312,418 H772 Q792,418 792,438 V576 L664,704 H312 Q292,704 292,684 V438 Q292,418 312,418 Z" fill="#efe9de"/>
+<path d="M792,576 L664,704 L664,576 Z" fill="#C9A96E" stroke="#C9A96E" stroke-width="6" stroke-linejoin="round"/>
+<rect x="336" y="482" width="190" height="30" rx="15" fill="#8a847a"/>
+<rect x="336" y="534" width="124" height="22" rx="11" fill="#8a847a" opacity="0.7"/>
+</g>
+</g>
+</svg>

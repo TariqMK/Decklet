@@ -1,0 +1,14 @@
+{
+  "name": "Decklet",
+  "tagline": "Your business cards, in 3D.",
+  "subtitle": "November 2026",
+  "icon": "icon/decklet.svg",
+  "icon_small": "icon/decklet-small.svg",
+  "fonts": {"ui": ["Inter"], "mono": ["SF Mono", "Menlo", "Cascadia Mono", "Consolas", "DejaVu Sans Mono"]},
+  "accent": "#C9A96E",
+  "semantic": {"error": "#e5484d"},
+  "themes": {
+    "dark": {"bg": "#161513", "surface": "#1c1a18", "border": "#34332f",
+             "text": "#efe9de", "text_secondary": "#aaa398", "text_muted": "#8a847a"}
+  }
+}

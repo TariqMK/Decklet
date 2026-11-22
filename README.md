@@ -1,8 +1,10 @@
-# Decklet
+![Decklet. Your business cards, in 3D.](assets/banner.png)
 
 Keep your paper business cards as photos and turn them over in 3D, like holding the real card. Works offline. Sends no data.
 
 **Contents:** [What it does](#what-it-does) · [Privacy](#privacy) · [Download](#download) · [How to use](#how-to-use) · [For developers](#for-developers) · [Licence](#licence)
+
+<img src="assets/screenshots/gallery-dark.png" alt="Decklet's gallery: nine business cards as photo tiles, with search, sort and Add card at the top" width="840">
 
 ## What it does
 
@@ -14,17 +16,25 @@ Each person shows as a photo tile of their newest card. A person with more than 
 
 ### Turn a card over in 3D
 
+<img src="assets/gifs/turn-card.gif" alt="Maya Okafor's business card in the 3D viewer: it turns over to show the green back, then turns back to the front" width="840">
+
 Select a card to see it in 3D. Drag to rotate it, scroll to zoom, and double-click to flip it. The light moves across the card as it turns.
 
 ### Front and back always line up
+
+<img src="assets/screenshots/corners-dark.png" alt="Adjust corners: the front and back photos of a card on a wooden desk, with a handle on each corner of the card" width="840">
 
 Decklet finds the edges of the card in each photo, straightens it and crops away the table around it. The front and back come out exactly the same size, so the 3D card has clean edges even when the two photos were taken differently. If Decklet misses an edge, drag the corners into place yourself with **Adjust corners**.
 
 ### Every card someone gave you
 
+<img src="assets/screenshots/cards-dark.png" alt="The viewer showing card 1 of 2 for Maya Okafor, with arrows to switch to her other card" width="840">
+
 When someone gives you a new card, for example after they change jobs, add it to the same person. Their name, tags and notes stay shared. Each card keeps its own company, role, email, phone, website and address.
 
 ### Contact details next to the card
+
+<img src="assets/screenshots/details-dark.png" alt="The info panel: email, phone, website and address with copy buttons, where you met, tags, notes and the files behind the card" width="320">
 
 The panel beside the card shows the name, role, company, email, phone, website, address, where you met, tags and notes. Copy any detail with one click, or copy the whole card as a vCard for your contacts app.
 
@@ -247,7 +257,35 @@ flowchart LR
 | `decklet/app_log.py` | `Decklet.log` and View Logs |
 | `decklet/update_check.py` | The manual update check |
 | `decklet/web/` | The page, with bundled Inter and Cormorant Garamond fonts |
-| `assets/make_icon.py` | Draws the app icon in `.png`, `.ico` and `.icns` |
+| `assets/icon/` | The icon masters (`decklet.svg`, and `decklet-small.svg` for 16 to 32 px) and the built `.png`, `.ico` and `.icns` |
+| `assets/make_assets.py` | Builds the icon files, `decklet/icon.png`, `assets/banner.png`, `assets/social-card.png` and `assets/brand-board.png` |
+| `assets/make_screenshots.py` | Retakes the README screenshots and the 3D GIF with made-up sample cards |
+
+</details>
+
+<details>
+<summary><strong>Update the screenshots and brand images</strong></summary>
+
+1. Install the brand tools:
+
+   ```bash
+   pip install -e ".[brand]"
+   playwright install chromium
+   ```
+
+2. Rebuild the icon files, banner and social card after a change to `assets/icon/*.svg` or the tagline:
+
+   ```bash
+   python assets/make_assets.py
+   ```
+
+3. Retake the screenshots and the GIF after a UI change:
+
+   ```bash
+   python assets/make_screenshots.py
+   ```
+
+The screenshot script makes fictional cards in a temporary folder and starts Decklet with a temporary data folder. It does not read your cards folder or settings, and it sends no network traffic. The version label shows the newest release tag.
 
 </details>
 

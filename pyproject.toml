@@ -25,6 +25,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.8"]
 build = ["pyinstaller>=6.11"]
+brand = ["PySide6>=6.8", "fonttools[woff]>=4.55", "playwright>=1.48"]  # assets/make_*.py
 
 [project.gui-scripts]
 decklet = "decklet.__main__:main"

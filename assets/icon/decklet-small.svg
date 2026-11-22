@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+<!-- Decklet small icon master (16 to 32 px): no text lines, larger fold, tile fills more of the canvas. Rendered by assets/make_assets.py. -->
+<rect x="32" y="32" width="960" height="960" rx="200" fill="#1c1a18"/>
+<g transform="translate(512 512) scale(1.22) translate(-512 -512)">
+<g transform="translate(4 9)">
+<rect x="232" y="318" width="500" height="286" rx="30" fill="#C9A96E" transform="rotate(-8 482 461)"/>
+<g transform="rotate(4 542 561)">
+<path d="M322,418 H762 Q792,418 792,448 V554 L642,704 H322 Q292,704 292,674 V448 Q292,418 322,418 Z" fill="#efe9de"/>
+<path d="M792,554 L642,704 L642,554 Z" fill="#C9A96E" stroke="#C9A96E" stroke-width="6" stroke-linejoin="round"/>
+</g>
+</g>
+</g>
+</svg>
