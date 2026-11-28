@@ -231,6 +231,26 @@ pytest -q
 ruff check .
 ```
 
+**Self-test:** check that a build starts. It loads the page, fonts, icon, image tools and web view, shows no window and writes only to a temporary folder. The last line is `Decklet vX.Y.Z`. The exit code is 0 for a pass and 1 for a failure.
+
+```bash
+python -m decklet --self-test             # from source
+dist/Decklet.app/Contents/MacOS/Decklet --self-test   # a macOS build
+```
+
+**End-to-end check:** test a running Decklet through its API with made-up sample cards. The check verifies each step on disk, and no image file may change.
+
+1. Make a new, empty folder for the sample cards.
+2. Write `Decklet-data/settings.json` beside the app: `{"root": "", "root_abs": "<that folder>"}`.
+3. Start Decklet and find the port it listens on (the script's header lists the command for each system).
+4. Run the check:
+
+   ```bash
+   python scripts/check_e2e.py --url http://127.0.0.1:<port> --work <that folder>
+   ```
+
+Add `--offline` to skip the update check, which contacts GitHub.
+
 </details>
 
 <details>
@@ -256,6 +276,8 @@ flowchart LR
 | `decklet/paths.py` | Data folder next to the app, bundled files, `settings.json` |
 | `decklet/app_log.py` | `Decklet.log` and View Logs |
 | `decklet/update_check.py` | The manual update check |
+| `decklet/self_test.py` | `--self-test`: checks that a build has everything it needs |
+| `scripts/check_e2e.py` | End-to-end check of a running app (standard library only) |
 | `decklet/web/` | The page, with bundled Inter and Cormorant Garamond fonts |
 | `assets/icon/` | The icon masters (`decklet.svg`, and `decklet-small.svg` for 16 to 32 px) and the built `.png`, `.ico` and `.icns` |
 | `assets/make_assets.py` | Builds the icon files, `decklet/icon.png`, `assets/banner.png`, `assets/social-card.png` and `assets/brand-board.png` |
@@ -300,7 +322,7 @@ The screenshot script makes fictional cards in a temporary folder and starts Dec
 5. Select the **Release type**: `draft` (only you can see it) or `public`.
 6. Select **Run workflow**.
 
-The workflow runs the tests first. It then builds Windows x64 (`.exe`), macOS Apple Silicon (`.zip`) and Linux x64 (`.tar.gz`). It makes the release only when all three builds succeed. The next version comes from the highest `vX.Y.Z` tag or release, drafts included. The workflow writes the version into the build only. It never commits to the repository.
+The workflow runs the tests first. It then builds Windows x64 (`.exe`), macOS Apple Silicon (`.zip`) and Linux x64 (`.tar.gz`), and runs `--self-test` on each build. It makes the release only when all three builds pass. The next version comes from the highest `vX.Y.Z` tag or release, drafts included. The workflow writes the version into the build only. It never commits to the repository.
 
 **Branch builds:** select another branch in **Use workflow from** to make a test build. Its version looks like `v1.5.0-new-sync.1`. A public branch build is a GitHub pre-release and is never offered as the latest release.
 
