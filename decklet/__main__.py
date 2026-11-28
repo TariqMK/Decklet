@@ -19,6 +19,10 @@ log = logging.getLogger("decklet.main")
 
 
 def main() -> None:
+    if "--self-test" in sys.argv[1:]:
+        from decklet import self_test
+
+        sys.exit(self_test.run())
     started = time.monotonic()
     data_dir = paths.data_dir()
     try:
